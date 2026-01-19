@@ -12,11 +12,3 @@ enum class ETileType : uint8
 	Option2 UMETA(DisplayName = "Option2"),
 	Option3 UMETA(DisplayName = "Hidden")
 };
-/*
-class GOPROJECT_API ETileType
-{
-public:
-	ETileType();
-	~ETileType();
-};
-*/

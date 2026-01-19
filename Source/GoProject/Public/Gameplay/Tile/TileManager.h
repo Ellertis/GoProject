@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Tile.h"
+#include "TileStruct.h"
 #include "TileManager.generated.h"
 
 UCLASS()
@@ -16,21 +16,31 @@ public:
 	// Sets default values for this actor's properties
 	ATileManager();
 
+	// Components
+	UPROPERTY(BlueprintReadWrite)
+	UInstancedStaticMeshComponent* BasicTiles;
+
+	UPROPERTY(BlueprintReadWrite)
+	UInstancedStaticMeshComponent* EmptyTiles;
+
+	UPROPERTY(BlueprintReadWrite)
+	UInstancedStaticMeshComponent* MoreTiles;
+	
 	// Variables
-	UPROPERTY(BlueprintReadWrite)
-	uint8 X = 2;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int X = 2;
 
-	UPROPERTY(BlueprintReadWrite)
-	uint8 Y = 2;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int Y = 2;
 
-	UPROPERTY(BlueprintReadWrite)
-	uint8 Displacement = 1;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int Displacement = 100;
 
-	UPROPERTY(BlueprintReadWrite)
-	TArray<ATile*> Tiles;
+	UPROPERTY()
+	TArray<FTileStruct> Tiles;
 
-	UPROPERTY(BlueprintReadWrite)
-	TSubclassOf<ATile> TileClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UStaticMesh* BasicStaticMesh;
 
 protected:
 	// Called in editor and on spawn
@@ -43,6 +53,6 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	
-	void SpawnTile(const FVector &InLocation);
 	void TilesSpawner();
+	int GetIndex(int indX, int indY) const;
 };
