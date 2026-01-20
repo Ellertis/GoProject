@@ -4,7 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "TileStruct.h"
+#include "TileDataAsset.h"
+#include "Tile.h"
 #include "TileManager.generated.h"
 
 UCLASS()
@@ -17,30 +18,24 @@ public:
 	ATileManager();
 
 	// Components
-	UPROPERTY(BlueprintReadWrite)
-	UInstancedStaticMeshComponent* BasicTiles;
-
-	UPROPERTY(BlueprintReadWrite)
-	UInstancedStaticMeshComponent* EmptyTiles;
-
-	UPROPERTY(BlueprintReadWrite)
-	UInstancedStaticMeshComponent* MoreTiles;
+	UPROPERTY()
+	USceneComponent* Root;
 	
 	// Variables
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
 	int X = 2;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
 	int Y = 2;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
 	int Displacement = 100;
 
-	UPROPERTY()
-	TArray<FTileStruct> Tiles;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
+	TArray<ATile*> Tiles;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UStaticMesh* BasicStaticMesh;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
+	UTileDataAsset* DataAsset;
 
 protected:
 	// Called in editor and on spawn
@@ -54,5 +49,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	
 	void TilesSpawner();
+	
 	int GetIndex(int indX, int indY) const;
+
+	UFUNCTION(CallInEditor)
+	void GenerateGrid();
 };

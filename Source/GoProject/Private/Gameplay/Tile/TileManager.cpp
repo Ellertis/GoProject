@@ -1,9 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Components/InstancedStaticMeshComponent.h"
 #include "Gameplay/Tile/TileManager.h"
-#include "Gameplay/Tile/ETileType.h"
-#include "Gameplay/Tile/TileStruct.h"
 
 // Sets default values
 ATileManager::ATileManager()
@@ -11,22 +8,15 @@ ATileManager::ATileManager()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
-	BasicTiles = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("BasicTiles"));
-	RootComponent = BasicTiles;
+	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	RootComponent = Root;
 	
-	EmptyTiles = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("EmptyTiles"));
 }
 
 void ATileManager::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
-	
-	Tiles.SetNum(X*Y);
-	
-	BasicTiles->SetStaticMesh(BasicStaticMesh);
-	BasicTiles->ClearInstances();
-	TilesSpawner();
-	
+
 }
 
 // Called when the game starts or when spawned
@@ -45,16 +35,23 @@ void ATileManager::Tick(float DeltaTime)
 
 void ATileManager::TilesSpawner()
 {
-	//FVector TileLocation (FVector(0, 0, 0));
+	Tiles.SetNum(X*Y);
+	
+	for (ATile* Tile : Tiles){
+		if (IsValid(Tile)){Tile->Destroy(true);}
+	}
+
+	Tiles.Empty();
+
+	FVector Location (FVector(0, 0, 0));
 	for (int i=0; i<X; i++)
 	{
 		for (int j=0; j<Y; j++)
 		{
-			FTransform T(FVector(i * Displacement,j * Displacement,0));
-			BasicTiles->AddInstance(T);
-			
-			int Index = GetIndex(i,j);
-			Tiles[Index].TileType = ETileType::Option1; 
+			Location = FVector(i * Displacement,j * Displacement,0);
+			ATile* NewTile = GetWorld()->SpawnActor<ATile>(Location,FRotator(0,0,0));
+			Tiles.Add(NewTile);
+			NewTile->AttachToActor(this,FAttachmentTransformRules::KeepRelativeTransform);
 		}
 	}
 }
@@ -62,4 +59,9 @@ void ATileManager::TilesSpawner()
 int ATileManager::GetIndex(int indX, int indY) const
 {
 	return indX + indY * X; //transforms 2d array into 1d array
+}
+
+void ATileManager::GenerateGrid()
+{
+	TilesSpawner();
 }
