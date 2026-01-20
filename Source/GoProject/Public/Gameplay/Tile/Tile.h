@@ -11,7 +11,7 @@ enum class ETileType : uint8
 {
 	Option1 UMETA(DisplayName = "Option1"),
 	Option2 UMETA(DisplayName = "Option2"),
-	Option3 UMETA(DisplayName = "Hidden")
+	Empty UMETA(DisplayName = "Empty")
 };
 
 UCLASS()
@@ -32,13 +32,13 @@ public:
 
 	// Variables
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<int> Neighbours; //Maybe u/int2
+	TArray<int> Neighbours;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UStaticMesh* Mesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	ETileType TileType;
+	ETileType TileType = ETileType::Empty;
 
 protected:
 	// Called in editor and on spawn

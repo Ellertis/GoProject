@@ -22,19 +22,22 @@ public:
 	USceneComponent* Root;
 	
 	// Variables
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
+	UPROPERTY()
 	int X = 2;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
+	UPROPERTY()
 	int Y = 2;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
+	UPROPERTY()
 	int Displacement = 100;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<ATile*> Tiles;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)	
+	TSubclassOf<ATile> TileClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UTileDataAsset* DataAsset;
 
 protected:
@@ -49,9 +52,13 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	
 	void TilesSpawner();
+
+	void BuildNeighbours(); //Assign neighbours indexes to generated tiles
 	
 	int GetIndex(int indX, int indY) const;
-
+	
+	bool IsValidIndex(int indX, int indY) const;
+	
 	UFUNCTION(CallInEditor)
 	void GenerateGrid();
 };
