@@ -32,13 +32,16 @@ public:
 
 	// Variables
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<int> Neighbours;
+	TArray<int> Neighbors;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UStaticMesh* Mesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ETileType TileType = ETileType::Empty;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool Walkable = false;
 
 protected:
 	// Called in editor and on spawn

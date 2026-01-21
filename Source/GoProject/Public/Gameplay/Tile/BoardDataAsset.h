@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
-#include "TileDataAsset.generated.h"
+#include "BoardDataAsset.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class GOPROJECT_API UTileDataAsset : public UDataAsset
+class GOPROJECT_API UBoardDataAsset : public UDataAsset
 {
 	GENERATED_BODY()
 public:

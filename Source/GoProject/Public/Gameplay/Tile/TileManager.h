@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "TileDataAsset.h"
+#include "BoardDataAsset.h"
 #include "Tile.h"
 #include "TileManager.generated.h"
 
@@ -32,13 +32,25 @@ public:
 	int Displacement = 100;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float ZOffset = 75;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<ATile> LinkClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UStaticMesh* LinkMesh;
+
+	UPROPERTY()
+	TArray<ATile*> Links;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<ATile*> Tiles;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)	
 	TSubclassOf<ATile> TileClass;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UTileDataAsset* DataAsset;
+	UBoardDataAsset* DataAsset;
 
 protected:
 	// Called in editor and on spawn
@@ -50,14 +62,22 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	static ATileManager* Get(UWorld* World);
 	
 	void TilesSpawner();
 
-	void BuildNeighbours(); //Assign neighbours indexes to generated tiles
+	void BuildNeighbors(); //Assign neighbours indexes to generated tiles
 	
 	int GetIndex(int indX, int indY) const;
 	
 	bool IsValidIndex(int indX, int indY) const;
+
+	TArray<ATile*> GetWalkableNeighbors(ATile* Tile) const;
+
+	void BuildGraph();
+
+	void VisualizeGraph();
 	
 	UFUNCTION(CallInEditor)
 	void GenerateGrid();
