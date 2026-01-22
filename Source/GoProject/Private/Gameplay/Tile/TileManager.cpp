@@ -43,18 +43,25 @@ ATileManager* ATileManager::Get(UWorld* World)
 
 void ATileManager::TilesSpawner()
 {
-	Tiles.SetNum(X*Y);
 	for (ATile* Tile : Tiles){if(IsValid(Tile))Tile->Destroy(true);}
 	Tiles.Empty();
+	Tiles.SetNum(X*Y);
 
 	FVector Location (FVector(0, 0, 0));
 	for (int i=0; i<X; i++)
 	{
 		for (int j=0; j<Y; j++)
 		{
+			int Index = GetIndex(i, j);
 			Location = FVector(i * Displacement,j * Displacement,0);
+			if (TempLDTiles.Num() > 0)
+			{
+				ATile* PreDefinedTile = GetWorld()->SpawnActor<ATile>(TempLDTiles[GetIndex(i,j)],Location,FRotator(0,0,0));
+				Tiles[Index] = PreDefinedTile;
+				PreDefinedTile->AttachToActor(this,FAttachmentTransformRules::KeepRelativeTransform); continue;
+			}
 			ATile* NewTile = GetWorld()->SpawnActor<ATile>(TileClass,Location,FRotator(0,0,0));
-			Tiles.Add(NewTile);
+			Tiles[Index] = NewTile;
 			NewTile->AttachToActor(this,FAttachmentTransformRules::KeepRelativeTransform);
 		}
 	}

@@ -36,7 +36,7 @@ void APlayerActor::BeginPlay()
 void APlayerActor::MoveToTile(ATile* Tile)
 {
 	if (!GetValidMoveTiles().Contains(Tile)) return;
-	SetActorLocation(Tile->GetActorLocation()+FVector(0,0,GetActorLocation().Z));
+	SetActorLocation(Tile->GetActorLocation()+FVector(0,0,100));
 	CurrTile = Tile;
 }
 

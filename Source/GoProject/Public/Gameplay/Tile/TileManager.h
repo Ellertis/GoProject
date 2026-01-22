@@ -50,6 +50,9 @@ public:
 	TSubclassOf<ATile> TileClass;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<TSubclassOf<ATile>> TempLDTiles;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UBoardDataAsset* DataAsset;
 
 protected:
