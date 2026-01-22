@@ -14,7 +14,7 @@ ATile::ATile()
 
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	MeshComponent->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
-
+	
 }
 
 void ATile::OnConstruction(const FTransform& Transform)
@@ -28,7 +28,8 @@ void ATile::OnConstruction(const FTransform& Transform)
 void ATile::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	DynamicMaterial = UMaterialInstanceDynamic::Create(Material, this);
+	MeshComponent->SetMaterial(0, DynamicMaterial);
 }
 
 // Called every frame
@@ -36,5 +37,11 @@ void ATile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void ATile::HighLightTile(bool value)
+{
+	if (value) DynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::Green);
+	if (!value) DynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::White);
 }
 

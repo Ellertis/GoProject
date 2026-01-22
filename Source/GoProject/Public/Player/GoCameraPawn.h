@@ -8,7 +8,6 @@
 #include "InputMappingContext.h"
 #include "InputAction.h"
 #include "PlayerActor.h"
-#include "Core/GoPlayerController.h"
 #include "GoCameraPawn.generated.h"
 
 UCLASS()
@@ -53,6 +52,9 @@ protected:
 
 	UPROPERTY()
 	APlayerController* PlayerController;
+
+	UPROPERTY()
+	AActor* SelectedActor;
 	
 private:
 	void OnClickTrigger();

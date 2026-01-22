@@ -36,8 +36,17 @@ void APlayerActor::BeginPlay()
 void APlayerActor::MoveToTile(ATile* Tile)
 {
 	if (!GetValidMoveTiles().Contains(Tile)) return;
-	CurrTile = Tile;
 	SetActorLocation(Tile->GetActorLocation()+FVector(0,0,GetActorLocation().Z));
+	CurrTile = Tile;
+}
+
+void APlayerActor::ToggleHighlightNeighbors(bool value) const
+{
+	TArray<ATile*> Tiles = GetValidMoveTiles();
+	for (ATile* Tile : Tiles)
+	{
+		Tile->HighLightTile(value);
+	}
 }
 
 // Called every frame

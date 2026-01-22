@@ -32,10 +32,16 @@ public:
 
 	// Variables
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<int> Neighbors;
+	UStaticMesh* Mesh;
+
+	UPROPERTY()
+	UMaterialInstanceDynamic* DynamicMaterial;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UStaticMesh* Mesh;
+	UMaterial* Material;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<int> Neighbors;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ETileType TileType = ETileType::Empty;
@@ -53,5 +59,7 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	void HighLightTile(bool value);
 
 };

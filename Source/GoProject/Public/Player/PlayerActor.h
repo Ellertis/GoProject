@@ -43,5 +43,7 @@ public:
 	TArray<ATile*> GetValidMoveTiles() const;
 
 	void MoveToTile(ATile* Tile);
+
+	void ToggleHighlightNeighbors(bool value) const;
 	
 };

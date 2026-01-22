@@ -6,6 +6,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "Components/InputComponent.h"
 #include "Gameplay/Tile/Tile.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AGoCameraPawn::AGoCameraPawn()
@@ -20,7 +21,7 @@ AGoCameraPawn::AGoCameraPawn()
 void AGoCameraPawn::BeginPlay()
 {
 	Super::BeginPlay();
-	PlayerController = Cast<APlayerController>(GetController());
+	PlayerController = Cast<APlayerController>(UGameplayStatics::GetPlayerController(GetWorld(),0));
 }
 
 // Called every frame
@@ -53,56 +54,40 @@ void AGoCameraPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
 	{
 		EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Started, this, &AGoCameraPawn::OnClickTrigger);
 		EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Completed, this,  &AGoCameraPawn::OnClickReleased);
+		//EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Triggered, this, &AGoCameraPawn::OnClickTrigger);
 	}
 }
-
 
 void AGoCameraPawn::OnClickTrigger()
 {
 	UE_LOG(LogTemp, Warning, TEXT("OnClickTrigger"));
-	APlayerController* TempPlayerController = Cast<APlayerController>(GetController()); //sus
-	FVector2D MousePos;
-	FVector WorldOrigin, WorldDir;
-	TempPlayerController->GetMousePosition(MousePos.X, MousePos.Y);
-	TempPlayerController->DeprojectScreenPositionToWorld(MousePos.X, MousePos.Y, WorldOrigin, WorldDir);
-	FVector End = WorldOrigin + WorldDir * 10000.f;
-	FHitResult Hit;
-	APlayerActor* HitPlayerActor;
-	if (GetWorld()->LineTraceSingleByChannel(Hit, WorldOrigin, End, ECC_Visibility))
+	FHitResult HitResult;
+	PlayerController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Visibility), true, HitResult);
+	if (APlayerActor* Player = Cast<APlayerActor>(HitResult.GetActor()))
 	{
-		if (APlayerActor* Player = Cast<APlayerActor>(Hit.GetActor()))
-		{
-			HitPlayerActor = Player; //The cast is useless First click on the actor. Highlight available tiles, then click on the highlighted tile
-			UE_LOG(LogTemp, Warning, TEXT("ReadyToMove"));
-		}
+		if (!IsValid(Player)) return;
+		SelectedActor = Player;
+		PlayerActor = Player;
+		PlayerActor->ToggleHighlightNeighbors(true);
 	}
+	//Player; //The cast is useless First click on the actor. Highlight available tiles, then click on the highlighted tile
+	UE_LOG(LogTemp, Warning, TEXT("ReadyToMove"));
+	
 	
 }
 
 void AGoCameraPawn::OnClickReleased()
 {
 	UE_LOG(LogTemp, Warning, TEXT("OnClickReleased"));
-	APlayerController* TempPlayerController = Cast<APlayerController>(GetController()); //sus
-	FVector2D MousePos;
-	FVector WorldOrigin, WorldDir;
-	TempPlayerController->GetMousePosition(MousePos.X, MousePos.Y);
-	TempPlayerController->DeprojectScreenPositionToWorld(MousePos.X, MousePos.Y, WorldOrigin, WorldDir);
-	FVector End = WorldOrigin + WorldDir * 10000.f;
-	FHitResult Hit;
-	ATile* HitTile = nullptr;
-	if (GetWorld()->LineTraceSingleByChannel(Hit, WorldOrigin, End, ECC_Visibility))
-	{
-		if (ATile* Tile = Cast<ATile>(Hit.GetActor()))
-		{
-			HitTile = Tile;
-			UE_LOG(LogTemp, Warning, TEXT("Clicked Tile"));
-		}
-	}
+	FHitResult HitResult;
+	PlayerController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Visibility), true,HitResult);
+	ATile* HitTile = Cast<ATile>(HitResult.GetActor());
+	if (!IsValid(HitTile)) return;
+	UE_LOG(LogTemp, Warning, TEXT("Clicked Tile"));
 	
 	if (!PlayerActor || !PlayerActor->CurrTile) return;
-	if (!HitTile)return;
+	PlayerActor->ToggleHighlightNeighbors(false);
 	PlayerActor->MoveToTile(HitTile);
-	UE_LOG(LogTemp, Warning, TEXT("OnClickTrigger Neighbor"));
 	
 }
 
