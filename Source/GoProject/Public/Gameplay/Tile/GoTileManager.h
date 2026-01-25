@@ -5,52 +5,49 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "BoardDataAsset.h"
-#include "Tile.h"
-#include "TileManager.generated.h"
+#include "GoTile.h"
+#include "GoTileManager.generated.h"
 
 UCLASS()
-class GOPROJECT_API ATileManager : public AActor
+class GOPROJECT_API AGoTileManager : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	ATileManager();
+	AGoTileManager();
 
 	// Components
 	UPROPERTY()
 	USceneComponent* Root;
 	
 	// Variables
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int X = 2;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int Y = 2;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int Displacement = 100;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float ZOffset = 75;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<ATile> LinkClass;
+	TSubclassOf<AGoTile> LinkClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UStaticMesh* LinkMesh;
 
 	UPROPERTY()
-	TArray<ATile*> Links;
+	TArray<AGoTile*> Links;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<ATile*> Tiles;
+	TArray<AGoTile*> Tiles;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)	
-	TSubclassOf<ATile> TileClass;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<TSubclassOf<ATile>> TempLDTiles;
+	TSubclassOf<AGoTile> TileClass;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UBoardDataAsset* DataAsset;
@@ -65,23 +62,43 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	static ATileManager* Get(UWorld* World);
+	
 	
 	void TilesSpawner();
 
 	void BuildNeighbors(); //Assign neighbours indexes to generated tiles
 	
-	int GetIndex(int indX, int indY) const;
+	void BuildConnections(); //Store Neighb
+	
+	int Get1DIndex(int indX, int indY) const; //Convert tile index to place in Tiles array
 	
 	bool IsValidIndex(int indX, int indY) const;
 
-	TArray<ATile*> GetWalkableNeighbors(ATile* Tile) const;
+	ETileConnection GetConnectionsBetween(int TileIndA, int TileIndB) const;
+	
+	ETileConnection GetOppositeConnections(ETileConnection Dir) const;
 
-	void BuildGraph();
+	bool AreConnected(int TileIndA, int TileIndB) const;
 
-	void VisualizeGraph();
+	TArray<AGoTile*> GetWalkableNeighbors(int TileInd) const;
+
+	void VisualizeConnections();
+
+	void SaveGridToDataAsset(UBoardDataAsset* DataAssetToSave);
+	
+	void LoadGridFromDataAsset(UBoardDataAsset* DataAssetToLoad);
 	
 	UFUNCTION(CallInEditor)
 	void GenerateGrid();
+
+	UFUNCTION(CallInEditor)
+	void UpdateConnections();
+
+	UFUNCTION(CallInEditor)
+	void SaveGrid();
+
+	UFUNCTION(CallInEditor)
+	void LoadGrid();
+	
+
 };

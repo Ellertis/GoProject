@@ -1,10 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Gameplay/Tile/Tile.h"
+#include "Gameplay/Tile/GoTile.h"
 
 // Sets default values
-ATile::ATile()
+AGoTile::AGoTile()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
@@ -17,7 +17,7 @@ ATile::ATile()
 	
 }
 
-void ATile::OnConstruction(const FTransform& Transform)
+void AGoTile::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 
@@ -25,7 +25,7 @@ void ATile::OnConstruction(const FTransform& Transform)
 }
 
 // Called when the game starts or when spawned
-void ATile::BeginPlay()
+void AGoTile::BeginPlay()
 {
 	Super::BeginPlay();
 	DynamicMaterial = UMaterialInstanceDynamic::Create(Material, this);
@@ -33,15 +33,35 @@ void ATile::BeginPlay()
 }
 
 // Called every frame
-void ATile::Tick(float DeltaTime)
+void AGoTile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 }
 
-void ATile::HighLightTile(bool value)
+void AGoTile::HighLightTile(bool value)
 {
 	if (value) DynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::Green);
 	if (!value) DynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::White);
+}
+
+bool AGoTile::HasConnections(ETileConnection Dir) const
+{
+	return (Connections & static_cast<int>(Dir)) != 0;
+}
+
+void AGoTile::AddConnections(ETileConnection Dir)
+{
+	Connections |= static_cast<int>(Dir);
+}
+
+void AGoTile::RemoveConnections(ETileConnection Dir)
+{
+	Connections &= ~static_cast<int>(Dir);
+}
+
+void AGoTile::ClearConnections()
+{
+	Connections = 0;
 }
 

@@ -4,30 +4,42 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Tile.generated.h"
+#include "GoTile.generated.h"
 
 UENUM(BlueprintType)
 enum class ETileType : uint8
 {
 	Option1 UMETA(DisplayName = "Option1"),
 	Option2 UMETA(DisplayName = "Option2"),
-	Empty UMETA(DisplayName = "Empty")
+	Empty UMETA(DisplayName = "Empty"),
+	Start UMETA(DisplayName = "Start"),
+	End UMETA(DisplayName = "End")
+};
+
+UENUM(BlueprintType, meta=(Bitflags, UseEnumValuesAsMaskValuesInEditor="true"))
+enum class ETileConnection : uint8
+{
+	None  = 0 UMETA(None), //0000
+	Up    = 1, //0001
+	Right = 1 << 1, //0010
+	Down  = 1 << 2,	//0100
+	Left  = 1 << 3 //1000
 };
 
 UCLASS()
-class GOPROJECT_API ATile : public AActor
+class GOPROJECT_API AGoTile : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	ATile();
+	AGoTile();
 
 	// Components
 	UPROPERTY()
 	USceneComponent* Root;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY()
 	UStaticMeshComponent* MeshComponent;
 
 	// Variables
@@ -43,11 +55,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<int> Neighbors;
 
+	UPROPERTY(BlueprintReadWrite)
+	int Index;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ETileType TileType = ETileType::Empty;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Bitmask, BitmaskEnum = "ETileConnection"))
+	int Connections;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool Walkable = false;
+	bool Walkable = true;
+
 
 protected:
 	// Called in editor and on spawn
@@ -61,5 +80,13 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	void HighLightTile(bool value);
+
+	bool HasConnections(ETileConnection Dir) const;
+
+	void AddConnections(ETileConnection Dir);
+
+	void RemoveConnections(ETileConnection Dir);
+
+	void ClearConnections();
 
 };

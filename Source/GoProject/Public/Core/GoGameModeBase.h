@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
-#include "Player/GoCameraPawn.h"
-#include "Player/PlayerActor.h"
+#include "Player/GoCameraActor.h"
+#include "Player/GoPlayerPawn.h"
 #include "GoGameModeBase.generated.h"
 
 /**
@@ -21,19 +21,28 @@ public:
 
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Classes")
-	TSubclassOf<AGoCameraPawn> CameraPawnClass;
+	TSubclassOf<AGoCameraActor> CameraActorClass;
 
 	UPROPERTY(EditDefaultsOnly, Category="Classes")
-	TSubclassOf<APlayerActor> PlayerActorClass;
+	TSubclassOf<AGoPlayerPawn> PlayerPawnClass;
 
 private:
 	UPROPERTY()
-	AGoCameraPawn* CameraPawn;
+	AGoCameraActor* CameraActor;
 
 	UPROPERTY()
-	APlayerActor* PlayerActor;
+	AGoPlayerPawn* PlayerPawn;
+
+	UPROPERTY()
+	APlayerController* PlayerController;
 
 	void SpawnPlayer();
 
-	void SpawnCameraPawn();
+	void SpawnCamera();
+	
+	UFUNCTION()
+	void OnGridReady();
+	
+public:
+	void RegisterTileManager(AGoTileManager* TileManager);
 };
