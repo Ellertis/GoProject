@@ -47,17 +47,17 @@ void AGoTile::HighLightTile(bool value)
 
 bool AGoTile::HasConnections(ETileConnection Dir) const
 {
-	return (Connections & static_cast<int>(Dir)) != 0;
+	return (Connections & static_cast<int32>(Dir)) != 0;
 }
 
 void AGoTile::AddConnections(ETileConnection Dir)
 {
-	Connections |= static_cast<int>(Dir);
+	Connections |= static_cast<int32>(Dir);
 }
 
 void AGoTile::RemoveConnections(ETileConnection Dir)
 {
-	Connections &= ~static_cast<int>(Dir);
+	Connections &= ~static_cast<int32>(Dir);
 }
 
 void AGoTile::ClearConnections()

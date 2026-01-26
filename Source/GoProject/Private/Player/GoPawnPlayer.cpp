@@ -1,16 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
+#include "Player/GoPawnPlayer.h"
 
-#include "Player/GoPlayerPawn.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Core/GoPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 
-#include "Gameplay/Tile/GoTile.h"
-
 // Sets default values
-AGoPlayerPawn::AGoPlayerPawn()
+AGoPawnPlayer::AGoPawnPlayer()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
@@ -24,24 +23,27 @@ AGoPlayerPawn::AGoPlayerPawn()
 }
 
 // Called when the game starts or when spawned
-void AGoPlayerPawn::BeginPlay()
+void AGoPawnPlayer::BeginPlay()
 {
 	Super::BeginPlay();
-	PlayerController = Cast<APlayerController>(UGameplayStatics::GetPlayerController(GetWorld(),0));
 	
+	TM =  Cast<AGoTileManager>(UGameplayStatics::GetActorOfClass(this, AGoTileManager::StaticClass()));
+	if(!TM) return;
+	PlacePlayer(TM->GetStartTile());
 }
 
 // Called every frame
-void AGoPlayerPawn::Tick(float DeltaTime)
+void AGoPawnPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 }
-
-void AGoPlayerPawn::PossessedBy(AController* NewController)
+	
+void AGoPawnPlayer::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-	PlayerController = Cast<APlayerController>(GetController());
+	PlayerController = Cast<AGoPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
+	if (!PlayerController) return;
 	if (UEnhancedInputLocalPlayerSubsystem* Subsystem=
 		ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
 		{
@@ -50,34 +52,42 @@ void AGoPlayerPawn::PossessedBy(AController* NewController)
 }
 
 // Called to bind functionality to input
-void AGoPlayerPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void AGoPawnPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Started, this, &AGoPlayerPawn::OnClickTrigger);
-		EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Completed, this,  &AGoPlayerPawn::OnClickReleased);
+		EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Started, this, &AGoPawnPlayer::OnClickTrigger);
+		EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Completed, this,  &AGoPawnPlayer::OnClickReleased);
 		//EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Triggered, this, &AGoCameraPawn::OnClickTrigger);
 	}
 }
 
-void AGoPlayerPawn::OnClickTrigger()
+void AGoPawnPlayer::PlacePlayer(AGoTile* Tile)
+{
+	CurrTile = Tile;
+	FVector StartLocation = CurrTile->GetActorLocation();
+	StartLocation = StartLocation + FVector(0, 0, 100);
+	SetActorLocation(StartLocation);
+	
+}
+
+void AGoPawnPlayer::OnClickTrigger()
 {
 	UE_LOG(LogTemp, Warning, TEXT("OnClickTrigger"));
 	FHitResult HitResult;
 	PlayerController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Visibility), true, HitResult);
-	if (this == Cast<AGoPlayerPawn>(HitResult.GetActor()))
+	if (this == Cast<AGoPawnPlayer>(HitResult.GetActor()))
 	{
 		SelectedActor = this;
 		ToggleHighlightNeighbors(true);
 	}
-	//Player; //The cast is useless First click on the actor. Highlight available tiles, then click on the highlighted tile
 	UE_LOG(LogTemp, Warning, TEXT("ReadyToMove"));
 	
 	
 }
 
-void AGoPlayerPawn::OnClickReleased()
+void AGoPawnPlayer::OnClickReleased()
 {
 	UE_LOG(LogTemp, Warning, TEXT("OnClickReleased"));
 	FHitResult HitResult;
@@ -86,24 +96,24 @@ void AGoPlayerPawn::OnClickReleased()
 	if (!IsValid(HitTile)) return;
 	UE_LOG(LogTemp, Warning, TEXT("Clicked Tile"));
 	
-	if (IsValid(CurrTile)) return;
+	if (!IsValid(CurrTile)) return;
 	ToggleHighlightNeighbors(false);
 	MoveToTile(HitTile);
 }
 
-TArray<AGoTile*> AGoPlayerPawn::GetValidMoveTiles() const
+TArray<AGoTile*> AGoPawnPlayer::GetValidMoveTiles() const
 {
 	return TM->GetWalkableNeighbors(CurrTile->Index);
 }
 
-void AGoPlayerPawn::MoveToTile(AGoTile* Tile)
+void AGoPawnPlayer::MoveToTile(AGoTile* Tile)
 {
 	if (!GetValidMoveTiles().Contains(Tile)) return;
 	SetActorLocation(Tile->GetActorLocation()+FVector(0,0,100));
 	CurrTile = Tile;
 }
 
-void AGoPlayerPawn::ToggleHighlightNeighbors(bool value) const
+void AGoPawnPlayer::ToggleHighlightNeighbors(bool value) const
 {
 	TArray<AGoTile*> Tiles = GetValidMoveTiles();
 	for (AGoTile* Tile : Tiles)
@@ -111,5 +121,3 @@ void AGoPlayerPawn::ToggleHighlightNeighbors(bool value) const
 		Tile->HighLightTile(value);
 	}
 }
-
-

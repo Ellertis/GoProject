@@ -19,7 +19,7 @@ enum class ETileType : uint8
 UENUM(BlueprintType, meta=(Bitflags, UseEnumValuesAsMaskValuesInEditor="true"))
 enum class ETileConnection : uint8
 {
-	None  = 0 UMETA(None), //0000
+	None = 0 UMETA(DisplayName = "Hidden"),
 	Up    = 1, //0001
 	Right = 1 << 1, //0010
 	Down  = 1 << 2,	//0100
@@ -61,8 +61,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ETileType TileType = ETileType::Empty;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Bitmask, BitmaskEnum = "ETileConnection"))
-	int Connections;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Bitmask, BitmaskEnum = "/Script/GoProject.ETileConnection"))
+	int32 Connections;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool Walkable = true;

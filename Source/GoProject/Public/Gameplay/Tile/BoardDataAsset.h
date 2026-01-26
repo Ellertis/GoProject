@@ -13,16 +13,16 @@ struct FGoTileData
 	GENERATED_BODY()
 	
 	UPROPERTY(EditAnywhere)
-	TSubclassOf<AGoTile> TileClass;
+	TSubclassOf<AGoTile> TileClass = nullptr;
     
-	UPROPERTY(EditAnywhere, meta = (Bitmask, BitmaskEnum = "ETileConnection"))
-	int Connections;
+	UPROPERTY(EditAnywhere, meta = (Bitmask, BitmaskEnum = "/Script/GoProject/ETileConnection"))
+	int32 Connections = 0;
 
 	UPROPERTY(EditAnywhere)
-	ETileType TileType;
+	ETileType TileType = ETileType::Empty;
     
 	UPROPERTY(EditAnywhere)
-	bool Walkable;
+	bool Walkable = true;
 	
 };
 
@@ -43,7 +43,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int Displacement = 100;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(VisibleAnywhere)
 	TArray<FGoTileData> Tiles;
 	
 };

@@ -3,6 +3,8 @@
 #include "Gameplay/Tile/GoTileManager.h"
 
 #include "Core/GoGameModeBase.h"
+#include "Core/GoPlayerController.h"
+#include "Kismet/GameplayStatics.h"
 #include "Math/IntPoint.h"
 
 static const TArray<TPair<FIntPoint, ETileConnection>> Directions =
@@ -95,7 +97,6 @@ void AGoTileManager::BuildConnections()
 	for (AGoTile* Tile : Tiles)
 	{
 		if (!IsValid(Tile)) continue;
-		//Tile->ClearConnections();
 		
 		for (int Neighbor : Tile->Neighbors)
 		{
@@ -127,6 +128,15 @@ bool AGoTileManager::IsValidIndex(int indX, int indY) const
 	return indX >= 0 && indY >= 0 && indX < X && indY < Y;
 }
 
+AGoTile* AGoTileManager::GetStartTile()
+{
+	for (AGoTile* Tile : Tiles)
+	{
+		if (Tile && Tile->TileType == ETileType::Start) return Tile;
+	}
+	return Tiles.IsValidIndex(0) ? nullptr : Tiles[0];
+}
+
 ETileConnection AGoTileManager::GetConnectionsBetween(int TileIndA, int TileIndB) const
 {
     if (!Tiles.IsValidIndex(TileIndA) || !Tiles.IsValidIndex(TileIndB)) return ETileConnection::None;
@@ -144,11 +154,11 @@ ETileConnection AGoTileManager::GetConnectionsBetween(int TileIndA, int TileIndB
 
     	if (TileA->HasConnections(Dir.Value))
     		Result = static_cast<ETileConnection>(
-    		static_cast<int>(Result) | static_cast<int>(Dir.Value));
+    		static_cast<int32>(Result) | static_cast<int32>(Dir.Value));
     	
     	if (TileB->HasConnections(GetOppositeConnections(Dir.Value)))
     		Result = static_cast<ETileConnection>(
-    		static_cast<int>(Result) | static_cast<int>(GetOppositeConnections(Dir.Value)));
+    		static_cast<int32>(Result) | static_cast<int32>(GetOppositeConnections(Dir.Value)));
     }
     return Result;
 }

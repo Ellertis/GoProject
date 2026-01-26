@@ -74,6 +74,8 @@ public:
 	
 	bool IsValidIndex(int indX, int indY) const;
 
+	AGoTile* GetStartTile();
+
 	ETileConnection GetConnectionsBetween(int TileIndA, int TileIndB) const;
 	
 	ETileConnection GetOppositeConnections(ETileConnection Dir) const;

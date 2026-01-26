@@ -4,18 +4,20 @@
 
 #include "CoreMinimal.h"
 #include "InputMappingContext.h"
-#include "GameFramework/Pawn.h"
+#include "Core/GoPawn.h"
 #include "Gameplay/Tile/GoTileManager.h"
-#include "GoPlayerPawn.generated.h"
+#include "GoPawnPlayer.generated.h"
 
+/**
+ * 
+ */
 UCLASS()
-class GOPROJECT_API AGoPlayerPawn : public APawn
+class GOPROJECT_API AGoPawnPlayer : public AGoPawn
 {
 	GENERATED_BODY()
-
 public:
 	// Sets default values for this pawn's properties
-	AGoPlayerPawn();
+	AGoPawnPlayer();
 
 protected:
 	// Called when the game starts or when spawned
@@ -33,7 +35,7 @@ protected:
 	UInputMappingContext* DefaultMappingContext;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UInputAction* ClickAction;
+	UInputAction* ClickAction;	
 
 	UPROPERTY()
 	AActor* SelectedActor;
@@ -56,6 +58,8 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	void PlacePlayer(AGoTile* Tile);
 
 private:
 	void OnClickTrigger();

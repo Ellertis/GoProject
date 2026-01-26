@@ -3,9 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GoPlayerController.h"
 #include "GameFramework/GameModeBase.h"
 #include "Player/GoCameraActor.h"
-#include "Player/GoPlayerPawn.h"
+#include "Player/GoPawnPlayer.h"
 #include "GoGameModeBase.generated.h"
 
 /**
@@ -24,25 +25,20 @@ protected:
 	TSubclassOf<AGoCameraActor> CameraActorClass;
 
 	UPROPERTY(EditDefaultsOnly, Category="Classes")
-	TSubclassOf<AGoPlayerPawn> PlayerPawnClass;
+	TSubclassOf<AGoPawnPlayer> PlayerPawnClass;
 
 private:
 	UPROPERTY()
 	AGoCameraActor* CameraActor;
 
 	UPROPERTY()
-	AGoPlayerPawn* PlayerPawn;
+	AGoPawnPlayer* PlayerPawn;
 
 	UPROPERTY()
-	APlayerController* PlayerController;
+	AGoPlayerController* PlayerController;
 
 	void SpawnPlayer();
 
 	void SpawnCamera();
 	
-	UFUNCTION()
-	void OnGridReady();
-	
-public:
-	void RegisterTileManager(AGoTileManager* TileManager);
 };
