@@ -19,7 +19,7 @@ enum class ETileType : uint8
 UENUM(BlueprintType, meta=(Bitflags, UseEnumValuesAsMaskValuesInEditor="true"))
 enum class ETileConnection : uint8
 {
-	None = 0 UMETA(DisplayName = "Hidden"),
+	None = 0 UMETA(Hidden),
 	Up    = 1, //0001
 	Right = 1 << 1, //0010
 	Down  = 1 << 2,	//0100

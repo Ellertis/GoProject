@@ -2,9 +2,6 @@
 
 #include "Gameplay/Tile/GoTileManager.h"
 
-#include "Core/GoGameModeBase.h"
-#include "Core/GoPlayerController.h"
-#include "Kismet/GameplayStatics.h"
 #include "Math/IntPoint.h"
 
 static const TArray<TPair<FIntPoint, ETileConnection>> Directions =
@@ -15,6 +12,7 @@ static const TArray<TPair<FIntPoint, ETileConnection>> Directions =
 	{ FIntPoint(0,-1), ETileConnection::Down }
 };
 
+
 // Sets default values
 AGoTileManager::AGoTileManager()
 {
@@ -23,6 +21,7 @@ AGoTileManager::AGoTileManager()
 
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	RootComponent = Root;
+	RootComponent->SetMobility(EComponentMobility::Static);
 	
 }
 
@@ -104,10 +103,7 @@ void AGoTileManager::BuildConnections()
 			AGoTile* NeighborTile = Tiles[Neighbor];
 			if (!NeighborTile) continue;
 
-			int AX = Tile->Index % X, AY = Tile->Index / X,
-			BX = NeighborTile->Index % X, BY = NeighborTile->Index / X; // convert 1d array to 2d array
-
-			FIntPoint DeltaDirection(BX - AX, BY - AY);
+			FIntPoint DeltaDirection(GetDeltaIndex(Tile->Index,Neighbor));
 			for (const TPair<FIntPoint, ETileConnection>& Dir : Directions)
 			{
 				if (Dir.Key != DeltaDirection) continue;
@@ -123,6 +119,17 @@ int AGoTileManager::Get1DIndex(int indX, int indY) const
 	return indX + indY * X; //transforms 2d array into 1d array
 }
 
+FIntPoint AGoTileManager::Get2DIndex(int TileInd) const
+{
+	return FIntPoint(TileInd / X, (TileInd % X));
+}
+
+FIntPoint AGoTileManager::GetDeltaIndex(int TileAInd, int TileBInd) const
+{
+	FIntPoint TileACoord = Get2DIndex(TileAInd), TileBCoord = Get2DIndex(TileBInd);
+	return FIntPoint(TileBCoord.X - TileACoord.X, TileBCoord.Y - TileACoord.Y);
+}
+
 bool AGoTileManager::IsValidIndex(int indX, int indY) const
 {
 	return indX >= 0 && indY >= 0 && indX < X && indY < Y;
@@ -134,35 +141,8 @@ AGoTile* AGoTileManager::GetStartTile()
 	{
 		if (Tile && Tile->TileType == ETileType::Start) return Tile;
 	}
-	return Tiles.IsValidIndex(0) ? nullptr : Tiles[0];
+	return Tiles.IsValidIndex(0) ? Tiles[0] : nullptr;
 }
-
-ETileConnection AGoTileManager::GetConnectionsBetween(int TileIndA, int TileIndB) const
-{
-    if (!Tiles.IsValidIndex(TileIndA) || !Tiles.IsValidIndex(TileIndB)) return ETileConnection::None;
-	AGoTile* TileA = Tiles[TileIndA];
-    AGoTile* TileB = Tiles[TileIndB];
-
-    int AX = TileIndA % X, AY = TileIndA / X, BX = TileIndB % X, BY = TileIndB / X; // convert 1d array to 2d array
-
-    FIntPoint DeltaDirection(BX - AX, BY - AY);
-	ETileConnection Result = ETileConnection::None;
-	
-    for (const TPair<FIntPoint, ETileConnection>& Dir : Directions)
-    {
-    	if (Dir.Key != DeltaDirection) continue;
-
-    	if (TileA->HasConnections(Dir.Value))
-    		Result = static_cast<ETileConnection>(
-    		static_cast<int32>(Result) | static_cast<int32>(Dir.Value));
-    	
-    	if (TileB->HasConnections(GetOppositeConnections(Dir.Value)))
-    		Result = static_cast<ETileConnection>(
-    		static_cast<int32>(Result) | static_cast<int32>(GetOppositeConnections(Dir.Value)));
-    }
-    return Result;
-}
-
 
 ETileConnection AGoTileManager::GetOppositeConnections(ETileConnection Dir) const
 {
@@ -183,10 +163,7 @@ bool AGoTileManager::AreConnected(int TileIndA, int TileIndB) const
 	const AGoTile* TileB = Tiles.IsValidIndex(TileIndB) ? Tiles[TileIndB] : nullptr;
 	if (!TileA || !TileB) return false;
 	
-	int AX = TileIndA % X, AY = TileIndA / X, BX = TileIndB % X, BY = TileIndB / X; // convert 1d array to 2d array
-
-	FIntPoint DeltaDirection(BX - AX, BY - AY);
-	
+	FIntPoint DeltaDirection(GetDeltaIndex(TileIndA,TileIndB));
 	for(const TPair<FIntPoint, ETileConnection>& Dir : Directions)
 	{
 		if (Dir.Key != DeltaDirection) continue;
@@ -212,7 +189,9 @@ TArray<AGoTile*> AGoTileManager::GetWalkableNeighbors(int TileInd) const
 
 void AGoTileManager::VisualizeConnections()
 {
-	for (AGoTile* Link : Links){if(IsValid(Link))Link->Destroy(true);}
+	if(Links.Num() != 0){
+		for (UStaticMeshComponent* Link : Links){if(IsValid(Link))Link->DestroyComponent();}
+	}
 	Links.Empty();
 
 	for (int i=0;i<Tiles.Num();i++)
@@ -226,21 +205,26 @@ void AGoTileManager::VisualizeConnections()
 			AGoTile* NeighbourTile = Tiles[NeighborIndex];
 			if (!NeighbourTile) continue;
 
-			FVector Start = Tile->GetActorLocation();
-			FVector End = NeighbourTile->GetActorLocation();
+			FVector Start = Tile->GetActorLocation(), End = NeighbourTile->GetActorLocation();
 			FVector Dir = End - Start;
 			float Length = Dir.Size();
 
 			// Spawn Links
 			FTransform LinkTransform;
-			LinkTransform.SetLocation(Start + Dir / 2 + FVector(0,0,ZOffset)); // midpoint
+			LinkTransform.SetLocation(Start + Dir / 2 + FVector(0,0,ZOffset)); // midpoint + offset
+			//LinkTransform.SetRotation(UE::Math::TQuat<double>(FRotationMatrix::MakeFromZ(Dir).Rotator())); // alt rotation calculation method
 			LinkTransform.SetRotation(FQuat::FindBetweenNormals(FVector::UpVector, Dir.GetSafeNormal()));
-			LinkTransform.SetScale3D(FVector(0.1f, 0.1f, Length / 100));
+			LinkTransform.SetScale3D(FVector(0.25f, 0.25f, Length / 100));
+			
+			FName ComponentName = MakeUniqueObjectName(this, UStaticMeshComponent::StaticClass(),TEXT("Link"));
+			UStaticMeshComponent* ConnectionComponent = NewObject<UStaticMeshComponent>(this,ComponentName);
+			ConnectionComponent->SetupAttachment(GetRootComponent());
+			ConnectionComponent->RegisterComponent();
+			ConnectionComponent->SetWorldTransform(LinkTransform);
+			Links.Add(ConnectionComponent);
+			if(!LinkMesh) continue;
+			ConnectionComponent->SetStaticMesh(LinkMesh);
 
-			AGoTile* Link = GetWorld()->SpawnActor<AGoTile>(LinkClass,LinkTransform);
-			Link->AttachToActor(this,FAttachmentTransformRules::KeepWorldTransform);
-			Links.Add(Link);
-			if (LinkMesh){Link->MeshComponent->SetStaticMesh(LinkMesh);}
 		}
 	}
 }

@@ -83,8 +83,6 @@ void AGoPawnPlayer::OnClickTrigger()
 		ToggleHighlightNeighbors(true);
 	}
 	UE_LOG(LogTemp, Warning, TEXT("ReadyToMove"));
-	
-	
 }
 
 void AGoPawnPlayer::OnClickReleased()

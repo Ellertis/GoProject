@@ -18,7 +18,7 @@ public:
 	AGoTileManager();
 
 	// Components
-	UPROPERTY()
+	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	USceneComponent* Root;
 	
 	// Variables
@@ -35,13 +35,10 @@ public:
 	float ZOffset = 75;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<AGoTile> LinkClass;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UStaticMesh* LinkMesh;
 
-	UPROPERTY()
-	TArray<AGoTile*> Links;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<UStaticMeshComponent*> Links;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<AGoTile*> Tiles;
@@ -71,13 +68,15 @@ public:
 	void BuildConnections(); //Store Neighb
 	
 	int Get1DIndex(int indX, int indY) const; //Convert tile index to place in Tiles array
+
+	FIntPoint Get2DIndex(int TileInd) const;
+
+	FIntPoint GetDeltaIndex(int TileAInd, int TileBInd) const;
 	
 	bool IsValidIndex(int indX, int indY) const;
 
 	AGoTile* GetStartTile();
 
-	ETileConnection GetConnectionsBetween(int TileIndA, int TileIndB) const;
-	
 	ETileConnection GetOppositeConnections(ETileConnection Dir) const;
 
 	bool AreConnected(int TileIndA, int TileIndB) const;
