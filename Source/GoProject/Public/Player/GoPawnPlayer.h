@@ -8,6 +8,7 @@
 #include "Gameplay/Tile/GoTileManager.h"
 #include "GoPawnPlayer.generated.h"
 
+#define  ECC_Click ECollisionChannel::ECC_GameTraceChannel1
 /**
  * 
  */

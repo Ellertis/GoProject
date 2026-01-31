@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "GoTile.generated.h"
-
+#define ECC_Click ECollisionChannel::ECC_GameTraceChannel1
 UENUM(BlueprintType)
 enum class ETileType : uint8
 {
@@ -36,10 +36,10 @@ public:
 	AGoTile();
 
 	// Components
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	USceneComponent* Root;
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UStaticMeshComponent* MeshComponent;
 
 	// Variables

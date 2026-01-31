@@ -14,7 +14,7 @@ AGoTile::AGoTile()
 
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	MeshComponent->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
-	
+	MeshComponent->SetCollisionResponseToChannel(ECC_Click,ECR_Block);
 }
 
 void AGoTile::OnConstruction(const FTransform& Transform)

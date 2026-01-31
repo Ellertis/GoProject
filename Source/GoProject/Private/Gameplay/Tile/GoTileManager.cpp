@@ -47,6 +47,7 @@ void AGoTileManager::Tick(float DeltaTime)
 
 void AGoTileManager::TilesSpawner()
 {
+	if (X <= 0 || Y <= 0){UE_LOG(LogTemp, Warning, TEXT("TileManager: X or Y is set to 0"));}
 	if (Tiles.Num() != 0){
 		for (AGoTile* Tile : Tiles){if(IsValid(Tile))Tile->Destroy(true);}
 	}
@@ -286,10 +287,6 @@ void AGoTileManager::LoadGridFromDataAsset(UBoardDataAsset* DataAssetToLoad)
 
 void AGoTileManager::GenerateGrid()
 {
-	if (!IsValid(DataAsset)) return;
-	X = DataAsset->X;
-	Y = DataAsset->Y;
-	Displacement = DataAsset->Displacement;
 	TilesSpawner();
 	BuildNeighbors();
 	BuildConnections();

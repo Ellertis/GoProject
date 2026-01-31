@@ -19,7 +19,7 @@ AGoPawnPlayer::AGoPawnPlayer()
 
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	MeshComponent->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
-
+	MeshComponent->SetCollisionResponseToChannel(ECC_Click,ECR_Block);
 }
 
 // Called when the game starts or when spawned
@@ -76,7 +76,7 @@ void AGoPawnPlayer::OnClickTrigger()
 {
 	UE_LOG(LogTemp, Warning, TEXT("OnClickTrigger"));
 	FHitResult HitResult;
-	PlayerController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Visibility), true, HitResult);
+	PlayerController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Click), true, HitResult);
 	if (this == Cast<AGoPawnPlayer>(HitResult.GetActor()))
 	{
 		SelectedActor = this;
