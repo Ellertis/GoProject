@@ -3,14 +3,14 @@
 #include "Gameplay/Tile/GoTileManager.h"
 
 #include "Math/IntPoint.h"
-
 static const TArray<TPair<FIntPoint, ETileConnection>> Directions =
 {
-	{ FIntPoint(1,0), ETileConnection::Right },
-	{ FIntPoint(-1,0), ETileConnection::Left },
-	{ FIntPoint(0,1), ETileConnection::Up },
-	{ FIntPoint(0,-1), ETileConnection::Down }
+	{FIntPoint(1,0), ETileConnection::Xplus},
+	{FIntPoint(-1,0), ETileConnection::Xminus},
+	{FIntPoint(0,1), ETileConnection::Yplus},
+	{FIntPoint(0,-1), ETileConnection::Yminus}
 };
+
 
 
 // Sets default values
@@ -122,7 +122,7 @@ int AGoTileManager::Get1DIndex(int indX, int indY) const
 
 FIntPoint AGoTileManager::Get2DIndex(int TileInd) const
 {
-	return FIntPoint(TileInd / X, (TileInd % X));
+	return FIntPoint(TileInd % X, (TileInd / X));
 }
 
 FIntPoint AGoTileManager::GetDeltaIndex(int TileAInd, int TileBInd) const
@@ -149,10 +149,10 @@ ETileConnection AGoTileManager::GetOppositeConnections(ETileConnection Dir) cons
 {
 	switch (Dir)
 	{
-	case ETileConnection::Up: return ETileConnection::Down;
-	case ETileConnection::Down: return ETileConnection::Up;
-	case ETileConnection::Right: return ETileConnection::Left;
-	case ETileConnection::Left: return ETileConnection::Right;
+	case ETileConnection::Xplus: return ETileConnection::Xminus;
+	case ETileConnection::Xminus: return ETileConnection::Xplus;
+	case ETileConnection::Yplus: return ETileConnection::Yminus;
+	case ETileConnection::Yminus: return ETileConnection::Yplus;
 	case ETileConnection::None: return ETileConnection::None;
 	default: return ETileConnection::None;
 	}
@@ -243,9 +243,13 @@ void AGoTileManager::SaveGridToDataAsset(UBoardDataAsset* DataAssetToSave)
 	for (int i = 0; i < Tiles.Num(); i++)
 	{
 		AGoTile* Tile = Tiles[i];
-		if (!IsValid(Tile)) continue;
+		if (!IsValid(Tile))
+		{
+			DataAssetToSave->Tiles[i] = FGoTileData();
+			continue;
+		}
 
-		FGoTileData& TileData = DataAsset->Tiles[i];
+		FGoTileData& TileData = DataAssetToSave->Tiles[i];
 		TileData.TileClass = Tile->GetClass();
 		TileData.Connections = Tile->Connections;
 		TileData.TileType = Tile->TileType;
@@ -253,7 +257,8 @@ void AGoTileManager::SaveGridToDataAsset(UBoardDataAsset* DataAssetToSave)
 	}
 
 #if WITH_EDITOR
-	DataAsset->MarkPackageDirty();
+	DataAssetToSave->Modify();
+	DataAssetToSave->MarkPackageDirty();
 #endif
 }
 

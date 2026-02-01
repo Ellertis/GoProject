@@ -20,10 +20,10 @@ UENUM(BlueprintType, meta=(Bitflags, UseEnumValuesAsMaskValuesInEditor="true"))
 enum class ETileConnection : uint8
 {
 	None = 0 UMETA(Hidden),
-	Up    = 1, //0001
-	Right = 1 << 1, //0010
-	Down  = 1 << 2,	//0100
-	Left  = 1 << 3 //1000
+	Xplus    = 1 UMETA(DisplayName="X+"), //0001
+	Xminus = 1 << 1 UMETA(DisplayName="X-"), //0010
+	Yplus  = 1 << 2 UMETA(DisplayName="Y+"),	//0100
+	Yminus  = 1 << 3 UMETA(DisplayName="Y-") //1000
 };
 
 UCLASS()
