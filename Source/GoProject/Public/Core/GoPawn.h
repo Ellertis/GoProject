@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "Gameplay/Tile/GoTile.h"
 #include "GoPawn.generated.h"
 
 UCLASS()
@@ -14,6 +15,17 @@ class GOPROJECT_API AGoPawn : public APawn
 public:
 	// Sets default values for this pawn's properties
 	AGoPawn();
+
+	//Components
+	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
+	USceneComponent* Root;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UStaticMeshComponent* MeshComponent;
+
+	//Variables
+	UPROPERTY()
+	AGoTile* CurrTile;
 
 protected:
 	// Called when the game starts or when spawned

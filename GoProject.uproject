@@ -12,6 +12,16 @@
 				"Engine",
 				"EnhancedInput"
 			]
+		},
+		{
+			"Name": "GoProjectEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Blutility",
+				"EditorSubsystem",
+				"GoProject"
+			]
 		}
 	],
 	"Plugins": [

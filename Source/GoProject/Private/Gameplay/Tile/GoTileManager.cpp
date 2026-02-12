@@ -122,7 +122,7 @@ int AGoTileManager::Get1DIndex(int indX, int indY) const
 
 FIntPoint AGoTileManager::Get2DIndex(int TileInd) const
 {
-	return FIntPoint(TileInd % X, (TileInd / X));
+	return FIntPoint(TileInd % X, TileInd / X);
 }
 
 FIntPoint AGoTileManager::GetDeltaIndex(int TileAInd, int TileBInd) const
@@ -136,13 +136,14 @@ bool AGoTileManager::IsValidIndex(int indX, int indY) const
 	return indX >= 0 && indY >= 0 && indX < X && indY < Y;
 }
 
-AGoTile* AGoTileManager::GetStartTile()
+TArray<AGoTile*> AGoTileManager::GetTilesWithType(ETileType TileType)
 {
+	TArray<AGoTile*> Result;
 	for (AGoTile* Tile : Tiles)
 	{
-		if (Tile && Tile->TileType == ETileType::Start) return Tile;
+		if (IsValid(Tile) && Tile->TileType == TileType) Result.Add(Tile);
 	}
-	return Tiles.IsValidIndex(0) ? Tiles[0] : nullptr;
+	return Result;
 }
 
 ETileConnection AGoTileManager::GetOppositeConnections(ETileConnection Dir) const
@@ -194,7 +195,7 @@ void AGoTileManager::VisualizeConnections()
 		for (UStaticMeshComponent* Link : Links){if(IsValid(Link))Link->DestroyComponent();}
 	}
 	Links.Empty();
-
+	
 	for (int i=0;i<Tiles.Num();i++)
 	{
 		AGoTile* Tile = Tiles[i];
@@ -233,7 +234,7 @@ void AGoTileManager::VisualizeConnections()
 void AGoTileManager::SaveGridToDataAsset(UBoardDataAsset* DataAssetToSave)
 {
 	if (!IsValid(DataAssetToSave)) return;
-
+	
 	DataAssetToSave->X = X;
 	DataAssetToSave->Y = Y;
 	DataAssetToSave->Displacement = Displacement;

@@ -11,9 +11,7 @@ void AGoGameModeBase::BeginPlay()
 	
 	SpawnPlayer();
 	SpawnCamera();
-	/* TODO Set proper Start/End tile then, spawn on start
 
-	*/ 
 }
 
 void AGoGameModeBase::SpawnPlayer()

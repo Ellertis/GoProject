@@ -65,7 +65,7 @@ public:
 
 	void BuildNeighbors(); //Assign neighbours indexes to generated tiles
 	
-	void BuildConnections(); //Store Neighb
+	void BuildConnections();
 	
 	int Get1DIndex(int indX, int indY) const; //Convert tile index to place in Tiles array
 
@@ -75,7 +75,7 @@ public:
 	
 	bool IsValidIndex(int indX, int indY) const;
 
-	AGoTile* GetStartTile();
+	TArray<AGoTile*> GetTilesWithType(ETileType TileType);
 
 	ETileConnection GetOppositeConnections(ETileConnection Dir) const;
 

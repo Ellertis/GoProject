@@ -14,11 +14,6 @@ AGoPawnPlayer::AGoPawnPlayer()
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 	
-	Root = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
-	RootComponent = Root;
-
-	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
-	MeshComponent->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
 	MeshComponent->SetCollisionResponseToChannel(ECC_Click,ECR_Block);
 }
 
@@ -28,8 +23,12 @@ void AGoPawnPlayer::BeginPlay()
 	Super::BeginPlay();
 	
 	TM =  Cast<AGoTileManager>(UGameplayStatics::GetActorOfClass(this, AGoTileManager::StaticClass()));
-	if(!TM) return;
-	PlacePlayer(TM->GetStartTile());
+	if(!TM) {UE_LOG(LogTemp, Warning, TEXT("GoPlayerPawn : Tile Manager not found")); return;}
+
+	TArray<AGoTile*> StarTiles = TM->GetTilesWithType(ETileType::Start);
+	if(StarTiles.Num() == 0 || !IsValid(StarTiles[0])) {UE_LOG(LogTemp, Warning, TEXT("GoPlayerPawn : Start Tile not Found")); return;}
+
+	PlacePlayer(StarTiles[0]);
 }
 
 // Called every frame
@@ -89,7 +88,7 @@ void AGoPawnPlayer::OnClickReleased()
 {
 	UE_LOG(LogTemp, Warning, TEXT("OnClickReleased"));
 	FHitResult HitResult;
-	PlayerController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Visibility), true,HitResult);
+	PlayerController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Click), true,HitResult);
 	AGoTile* HitTile = Cast<AGoTile>(HitResult.GetActor());
 	if (!IsValid(HitTile)) return;
 	UE_LOG(LogTemp, Warning, TEXT("Clicked Tile"));

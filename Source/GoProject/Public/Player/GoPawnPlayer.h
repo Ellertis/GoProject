@@ -24,13 +24,6 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	//Components
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
-	USceneComponent* Root;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	UStaticMeshComponent* MeshComponent;
-
 	// Variables
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UInputMappingContext* DefaultMappingContext;
@@ -46,9 +39,7 @@ protected:
 
 	UPROPERTY()
 	AGoTileManager* TM;
-	
-	UPROPERTY()
-	AGoTile* CurrTile;
+
 
 public:	
 	// Called every frame
