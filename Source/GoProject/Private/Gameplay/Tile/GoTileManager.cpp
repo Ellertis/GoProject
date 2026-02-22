@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Gameplay/Tile/GoTileManager.h"
-
 #include "Math/IntPoint.h"
+
 static const TArray<TPair<FIntPoint, ETileConnection>> Directions =
 {
 	{FIntPoint(1,0), ETileConnection::Xplus},
@@ -35,7 +35,7 @@ void AGoTileManager::OnConstruction(const FTransform& Transform)
 void AGoTileManager::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 }
 
 // Called every frame
@@ -62,6 +62,30 @@ void AGoTileManager::TilesSpawner()
 			int Index = Get1DIndex(i, j);
 			Location = FVector(i * Displacement,j * Displacement,0);
 			AGoTile* NewTile = GetWorld()->SpawnActor<AGoTile>(TileClass,Location,FRotator(0,0,0));
+			Tiles[Index] = NewTile;
+			NewTile->Index = Index;
+			NewTile->AttachToActor(this,FAttachmentTransformRules::KeepRelativeTransform);
+		}
+	}
+}
+
+void AGoTileManager::TilesSpawnerWDataAsset()
+{
+	if (X <= 0 || Y <= 0){UE_LOG(LogTemp, Warning, TEXT("TileManager: X or Y is set to 0"));}
+	if (Tiles.Num() != 0){
+		for (AGoTile* Tile : Tiles){if(IsValid(Tile))Tile->Destroy(true);}
+	}
+	Tiles.Empty();
+	Tiles.SetNum(X*Y);
+
+	FVector Location (FVector(0, 0, 0));
+	for (int i=0; i<X; i++)
+	{
+		for (int j=0; j<Y; j++)
+		{
+			int Index = Get1DIndex(i, j);
+			Location = FVector(i * Displacement,j * Displacement,0);
+			AGoTile* NewTile = GetWorld()->SpawnActor<AGoTile>(DataAsset->Tiles[Index].TileClass,Location,FRotator(0,0,0));
 			Tiles[Index] = NewTile;
 			NewTile->Index = Index;
 			NewTile->AttachToActor(this,FAttachmentTransformRules::KeepRelativeTransform);
@@ -271,7 +295,7 @@ void AGoTileManager::LoadGridFromDataAsset(UBoardDataAsset* DataAssetToLoad)
 	Y = DataAssetToLoad->Y;
 	Displacement = DataAssetToLoad->Displacement;
 
-	TilesSpawner();
+	TilesSpawnerWDataAsset();
 	
 	for (int i = 0; i < Tiles.Num(); i++)
 	{
@@ -288,6 +312,8 @@ void AGoTileManager::LoadGridFromDataAsset(UBoardDataAsset* DataAssetToLoad)
 
 	BuildNeighbors();
 	VisualizeConnections();
+	OnGridGenerated.Broadcast();
+	UE_LOG(LogTemp, Display, TEXT("Broadcast OnGridGenerated"));
 }
 
 

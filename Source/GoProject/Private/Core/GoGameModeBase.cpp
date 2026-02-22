@@ -8,10 +8,18 @@
 void AGoGameModeBase::BeginPlay()
 {
     Super::BeginPlay();
-	
+	TM = Cast<AGoTileManager>(UGameplayStatics::GetActorOfClass(this, AGoTileManager::StaticClass()));
+	if(!TM) return;
+	TM->OnGridGenerated.AddDynamic(this, &AGoGameModeBase::OnGridGenerated);
+	UE_LOG(LogTemp, Display, TEXT("Binded OnGridGenerated"));
+	TM->LoadGridFromDataAsset(TM->DataAsset);
+
+}
+
+void AGoGameModeBase::OnGridGenerated()
+{
 	SpawnPlayer();
 	SpawnCamera();
-
 }
 
 void AGoGameModeBase::SpawnPlayer()
@@ -27,6 +35,7 @@ void AGoGameModeBase::SpawnPlayer()
 	PlayerController = Cast<AGoPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
 	if(!PlayerController) return;
 	PlayerController->Possess(PlayerPawn);
+	UE_LOG(LogTemp, Display, TEXT("SpawnPlayer & Possess"));
 }
 
 void AGoGameModeBase::SpawnCamera()
@@ -35,7 +44,7 @@ void AGoGameModeBase::SpawnCamera()
 
 	APlayerStart* PlayerStart = Cast<APlayerStart>(
 		UGameplayStatics::GetActorOfClass(this, APlayerStart::StaticClass()));
-	if (!PlayerStart)return;
+	if (!PlayerStart) return;
 
 	FVector CameraLocation = PlayerStart->GetActorLocation();
 	FRotator CameraRotation = PlayerStart->GetActorRotation();
@@ -47,4 +56,5 @@ void AGoGameModeBase::SpawnCamera()
 	);
 
 	PlayerController->SetViewTarget(CameraActor);
+	UE_LOG(LogTemp, Display, TEXT("Spawn Camera & Finished"));
 }

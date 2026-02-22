@@ -8,6 +8,8 @@
 #include "GoTile.h"
 #include "GoTileManager.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGridGenerated);
+
 UCLASS()
 class GOPROJECT_API AGoTileManager : public AActor
 {
@@ -49,6 +51,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UBoardDataAsset* DataAsset;
 
+	FOnGridGenerated OnGridGenerated;
+
 protected:
 	// Called in editor and on spawn
 	virtual void OnConstruction(const FTransform& Transform) override;
@@ -60,8 +64,9 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	
-	
 	void TilesSpawner();
+
+	void TilesSpawnerWDataAsset();
 
 	void BuildNeighbors(); //Assign neighbours indexes to generated tiles
 	

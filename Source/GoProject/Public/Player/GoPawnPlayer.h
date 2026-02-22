@@ -9,9 +9,10 @@
 #include "GoPawnPlayer.generated.h"
 
 #define  ECC_Click ECollisionChannel::ECC_GameTraceChannel1
-/**
- * 
- */
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerMovement);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerDeath);
+
 UCLASS()
 class GOPROJECT_API AGoPawnPlayer : public AGoPawn
 {
@@ -25,12 +26,30 @@ protected:
 	virtual void BeginPlay() override;
 
 	// Variables
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player|Input")
 	UInputMappingContext* DefaultMappingContext;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UInputAction* ClickAction;	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player|Input")
+	UInputAction* ClickAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player|Input")
+	UInputAction* TouchAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player|Ability")
+	bool bIsAlive = true;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player|Ability")
+	bool bIsMoving = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player|Ability")
+	bool bCanClickTile = false;
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Player|Tile")
+	AGoTile* CurrTile;
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Player|Tile")
+	AGoTile* TargetTile;
+	
 	UPROPERTY()
 	AActor* SelectedActor;
 
@@ -50,13 +69,13 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
+	
 	void PlacePlayer(AGoTile* Tile);
 
 private:
 	void OnClickTrigger();
 	void OnClickReleased();
-
+	
 	TArray<AGoTile*> GetValidMoveTiles() const;
 
 	void MoveToTile(AGoTile* Tile);

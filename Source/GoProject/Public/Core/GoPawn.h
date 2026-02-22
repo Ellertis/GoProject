@@ -24,8 +24,6 @@ public:
 	UStaticMeshComponent* MeshComponent;
 
 	//Variables
-	UPROPERTY()
-	AGoTile* CurrTile;
 
 protected:
 	// Called when the game starts or when spawned

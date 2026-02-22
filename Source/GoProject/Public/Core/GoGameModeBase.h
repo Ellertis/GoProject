@@ -9,15 +9,13 @@
 #include "Player/GoPawnPlayer.h"
 #include "GoGameModeBase.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class GOPROJECT_API AGoGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
 	
 public:
+	UFUNCTION()
 	virtual void BeginPlay() override;
 
 protected:
@@ -37,8 +35,13 @@ private:
 	UPROPERTY()
 	AGoPlayerController* PlayerController;
 
+	UPROPERTY()
+	AGoTileManager* TM;
+
+	UFUNCTION()
+	void OnGridGenerated();
+	
 	void SpawnPlayer();
 
 	void SpawnCamera();
-	
 };

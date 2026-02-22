@@ -21,13 +21,12 @@ AGoPawnPlayer::AGoPawnPlayer()
 void AGoPawnPlayer::BeginPlay()
 {
 	Super::BeginPlay();
-	
 	TM =  Cast<AGoTileManager>(UGameplayStatics::GetActorOfClass(this, AGoTileManager::StaticClass()));
 	if(!TM) {UE_LOG(LogTemp, Warning, TEXT("GoPlayerPawn : Tile Manager not found")); return;}
-
+	
 	TArray<AGoTile*> StarTiles = TM->GetTilesWithType(ETileType::Start);
 	if(StarTiles.Num() == 0 || !IsValid(StarTiles[0])) {UE_LOG(LogTemp, Warning, TEXT("GoPlayerPawn : Start Tile not Found")); return;}
-
+	
 	PlacePlayer(StarTiles[0]);
 }
 
@@ -74,6 +73,7 @@ void AGoPawnPlayer::PlacePlayer(AGoTile* Tile)
 void AGoPawnPlayer::OnClickTrigger()
 {
 	UE_LOG(LogTemp, Warning, TEXT("OnClickTrigger"));
+	//if(!bCanClickTile) return;
 	FHitResult HitResult;
 	PlayerController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Click), true, HitResult);
 	if (this == Cast<AGoPawnPlayer>(HitResult.GetActor()))

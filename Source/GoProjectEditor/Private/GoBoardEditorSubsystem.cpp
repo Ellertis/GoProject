@@ -212,10 +212,9 @@ void UGoBoardEditorSubsystem::SavePreviewToDataAsset(UBoardDataAsset* DataAsset)
 		if (!Tile) continue;
 		FGoTileData& TileData = DataAsset->Tiles[i];
 		
-		if (Tile->GetClass() == AGoTilePreview::StaticClass())
+		if (AGoTilePreview* TilePreview = Cast<AGoTilePreview>(Tile))
 		{
-			AGoTilePreview* TilePreview = Cast<AGoTilePreview>(PreviewTiles[i]);
-			TileData.TileClass = TilePreview->GetClass();
+			TileData.TileClass = TilePreview->TileClass;
 		}
 		else
 		{
