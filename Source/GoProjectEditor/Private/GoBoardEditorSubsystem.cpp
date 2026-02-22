@@ -179,14 +179,15 @@ void UGoBoardEditorSubsystem::LoadGridPreviewFromDataAsset(UBoardDataAsset* Data
 		const FGoTileData& TileData = DataAsset->Tiles[i];
 		FIntPoint TileCoord = Get2DIndex(i);
 		FVector Location = FVector(TileCoord.X * GridDisplacement,TileCoord.Y * GridDisplacement,0);
-		AGoTile* Tile = World->SpawnActor<AGoTile>(
-			TileData.TileClass,
+		AGoTilePreview* Tile = World->SpawnActor<AGoTilePreview>(
+			PreviewTileClass,
 			Location,
 			FRotator::ZeroRotator
 		);
 		Tile->AttachToActor(TileManager,FAttachmentTransformRules::KeepRelativeTransform);
 		
 		PreviewTiles[i] = Tile;
+		Tile->TileClass = TileData.TileClass;
 		Tile->Connections = TileData.Connections;
 		Tile->TileType = TileData.TileType;
 		Tile->Walkable = TileData.Walkable;
@@ -215,6 +216,7 @@ void UGoBoardEditorSubsystem::SavePreviewToDataAsset(UBoardDataAsset* DataAsset)
 		if (AGoTilePreview* TilePreview = Cast<AGoTilePreview>(Tile))
 		{
 			TileData.TileClass = TilePreview->TileClass;
+			TileData.Enemies = TilePreview->Enemies;
 		}
 		else
 		{

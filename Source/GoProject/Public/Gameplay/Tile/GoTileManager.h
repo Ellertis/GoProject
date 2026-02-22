@@ -90,6 +90,8 @@ public:
 
 	void VisualizeConnections();
 
+	void SpawnEnemies();
+
 	void SaveGridToDataAsset(UBoardDataAsset* DataAssetToSave);
 	
 	void LoadGridFromDataAsset(UBoardDataAsset* DataAssetToLoad);

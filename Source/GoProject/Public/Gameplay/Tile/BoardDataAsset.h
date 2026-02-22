@@ -5,7 +5,23 @@
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
 #include "GoTile.h"
+#include "Gameplay/Enemies/GoPawnEnemy.h"
 #include "BoardDataAsset.generated.h"
+
+USTRUCT()
+struct FEnemySpawnData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<AGoPawnEnemy> EnemyClass = nullptr;
+
+	UPROPERTY(EditAnywhere)
+	ETileConnection FaceDirection = ETileConnection::Xplus;
+	
+	UPROPERTY(EditAnywhere)
+	int Count = 1;
+};
 
 USTRUCT()
 struct FGoTileData
@@ -23,6 +39,9 @@ struct FGoTileData
     
 	UPROPERTY(EditAnywhere)
 	bool Walkable = true;
+
+	UPROPERTY(EditAnywhere)
+	TArray<FEnemySpawnData> Enemies;
 	
 };
 

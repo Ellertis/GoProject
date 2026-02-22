@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Gameplay/Tile/GoTileManager.h"
+
+#include "IContentBrowserSingleton.h"
 #include "Math/IntPoint.h"
 
 static const TArray<TPair<FIntPoint, ETileConnection>> Directions =
@@ -85,7 +87,9 @@ void AGoTileManager::TilesSpawnerWDataAsset()
 		{
 			int Index = Get1DIndex(i, j);
 			Location = FVector(i * Displacement,j * Displacement,0);
-			AGoTile* NewTile = GetWorld()->SpawnActor<AGoTile>(DataAsset->Tiles[Index].TileClass,Location,FRotator(0,0,0));
+			AGoTile* NewTile = GetWorld()->SpawnActor<AGoTile>(DataAsset->Tiles[Index].TileClass,
+				Location,
+				FRotator(0,0,0));
 			Tiles[Index] = NewTile;
 			NewTile->Index = Index;
 			NewTile->AttachToActor(this,FAttachmentTransformRules::KeepRelativeTransform);
@@ -255,6 +259,25 @@ void AGoTileManager::VisualizeConnections()
 	}
 }
 
+void AGoTileManager::SpawnEnemies() // MOVE TO ENEMY MANAGER
+{
+	for(int i=0;i<Tiles.Num();i++)
+	{
+		FGoTileData& TileData = DataAsset->Tiles[i];
+		if(TileData.Enemies.Num() <= 0) continue;
+		AGoTile* Tile = Tiles[i];
+		for(const FEnemySpawnData& SpawnData : TileData.Enemies)
+		{
+			for (int k = 0; k < SpawnData.Count; k++)
+			{
+				GetWorld()->SpawnActor<AGoPawnEnemy>(SpawnData.EnemyClass,
+					Tile->GetActorLocation() + FVector(0,0,ZOffset+ZOffset),
+					FRotator::ZeroRotator); //Deduce from SpawnData.FaceDirection || Xplus = TileManager->GetActorForwardVector()
+			}
+		}
+	}
+}
+
 void AGoTileManager::SaveGridToDataAsset(UBoardDataAsset* DataAssetToSave)
 {
 	if (!IsValid(DataAssetToSave)) return;
@@ -290,7 +313,7 @@ void AGoTileManager::SaveGridToDataAsset(UBoardDataAsset* DataAssetToSave)
 void AGoTileManager::LoadGridFromDataAsset(UBoardDataAsset* DataAssetToLoad)
 {
 	if (!IsValid(DataAssetToLoad)) return;
-
+	DataAsset = DataAssetToLoad;
 	X = DataAssetToLoad->X;
 	Y = DataAssetToLoad->Y;
 	Displacement = DataAssetToLoad->Displacement;
@@ -314,6 +337,7 @@ void AGoTileManager::LoadGridFromDataAsset(UBoardDataAsset* DataAssetToLoad)
 	VisualizeConnections();
 	OnGridGenerated.Broadcast();
 	UE_LOG(LogTemp, Display, TEXT("Broadcast OnGridGenerated"));
+	SpawnEnemies();
 }
 
 

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Gameplay/Tile/BoardDataAsset.h"
 #include "Gameplay/Tile/GoTile.h"
 #include "GoTilePreview.generated.h"
 
@@ -16,4 +17,7 @@ class GOPROJECTEDITOR_API AGoTilePreview : public AGoTile
 public:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AGoTile> TileClass;
+
+	UPROPERTY(EditAnywhere)
+	TArray<FEnemySpawnData> Enemies;
 };
