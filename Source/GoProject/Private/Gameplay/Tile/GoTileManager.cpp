@@ -37,7 +37,6 @@ void AGoTileManager::OnConstruction(const FTransform& Transform)
 void AGoTileManager::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
@@ -63,82 +62,12 @@ void AGoTileManager::TilesSpawner()
 		{
 			int Index = Get1DIndex(i, j);
 			Location = FVector(i * Displacement,j * Displacement,0);
-			AGoTile* NewTile = GetWorld()->SpawnActor<AGoTile>(TileClass,Location,FRotator(0,0,0));
-			Tiles[Index] = NewTile;
-			NewTile->Index = Index;
-			NewTile->AttachToActor(this,FAttachmentTransformRules::KeepRelativeTransform);
-		}
-	}
-}
-
-void AGoTileManager::TilesSpawnerWDataAsset()
-{
-	if (X <= 0 || Y <= 0){UE_LOG(LogTemp, Warning, TEXT("TileManager: X or Y is set to 0"));}
-	if (Tiles.Num() != 0){
-		for (AGoTile* Tile : Tiles){if(IsValid(Tile))Tile->Destroy(true);}
-	}
-	Tiles.Empty();
-	Tiles.SetNum(X*Y);
-
-	FVector Location (FVector(0, 0, 0));
-	for (int i=0; i<X; i++)
-	{
-		for (int j=0; j<Y; j++)
-		{
-			int Index = Get1DIndex(i, j);
-			Location = FVector(i * Displacement,j * Displacement,0);
 			AGoTile* NewTile = GetWorld()->SpawnActor<AGoTile>(DataAsset->Tiles[Index].TileClass,
 				Location,
 				FRotator(0,0,0));
 			Tiles[Index] = NewTile;
 			NewTile->Index = Index;
 			NewTile->AttachToActor(this,FAttachmentTransformRules::KeepRelativeTransform);
-		}
-	}
-}
-
-void AGoTileManager::BuildNeighbors()
-{
-	for (int i=0; i<X; i++)
-	{
-		for (int j=0; j<Y; j++)
-		{
-			if(!IsValidIndex(i,j)) continue;
-			int Index = Get1DIndex(i,j); // transform 2d coords to 1d array
-			AGoTile* Tile = Tiles[Index];
-			Tile->Neighbors.Empty();
-			
-			for(const TPair<FIntPoint, ETileConnection>& Dir : Directions)
-			{
-				int NX = i + Dir.Key.X;
-				int NY = j + Dir.Key.Y;
-				if (!IsValidIndex(NX, NY)) continue;
-				int NeighborIndex = Get1DIndex(NX, NY);
-				Tile->Neighbors.Add(NeighborIndex);
-			}
-		}
-	}
-}
-
-void AGoTileManager::BuildConnections()
-{
-	for (AGoTile* Tile : Tiles)
-	{
-		if (!IsValid(Tile)) continue;
-		
-		for (int Neighbor : Tile->Neighbors)
-		{
-			if(AreConnected(Tile->Index, Neighbor)) continue;
-			AGoTile* NeighborTile = Tiles[Neighbor];
-			if (!NeighborTile) continue;
-
-			FIntPoint DeltaDirection(GetDeltaIndex(Tile->Index,Neighbor));
-			for (const TPair<FIntPoint, ETileConnection>& Dir : Directions)
-			{
-				if (Dir.Key != DeltaDirection) continue;
-				Tile->AddConnections(Dir.Value);
-				NeighborTile->AddConnections(GetOppositeConnections(Dir.Value));
-			}
 		}
 	}
 }
@@ -259,8 +188,9 @@ void AGoTileManager::VisualizeConnections()
 	}
 }
 
-void AGoTileManager::SpawnEnemies() // MOVE TO ENEMY MANAGER
+void AGoTileManager::SpawnEnemies()
 {
+	if(!IsValid(EnemyManager)) return;
 	for(int i=0;i<Tiles.Num();i++)
 	{
 		FGoTileData& TileData = DataAsset->Tiles[i];
@@ -270,44 +200,29 @@ void AGoTileManager::SpawnEnemies() // MOVE TO ENEMY MANAGER
 		{
 			for (int k = 0; k < SpawnData.Count; k++)
 			{
-				GetWorld()->SpawnActor<AGoPawnEnemy>(SpawnData.EnemyClass,
-					Tile->GetActorLocation() + FVector(0,0,ZOffset+ZOffset),
-					FRotator::ZeroRotator); //Deduce from SpawnData.FaceDirection || Xplus = TileManager->GetActorForwardVector()
+				FTransform SpawnTransform;
+				SpawnTransform.SetLocation(Tile->GetActorLocation() + FVector(0,0,ZOffset+ZOffset));
+				
+				FRotator SpawnRotator;
+				switch(SpawnData.FaceDirection)
+				{
+					case EFaceDirection::Xplus:
+						SpawnRotator = GetActorForwardVector().Rotation();break;
+					case EFaceDirection::Xminus:
+						SpawnRotator = (-GetActorForwardVector()).Rotation();break;
+					case EFaceDirection::Yplus:
+						SpawnRotator = GetActorRightVector().Rotation();break;
+					case EFaceDirection::Yminus:
+						SpawnRotator = (-GetActorRightVector()).Rotation();break;
+					default:
+						SpawnRotator = FRotator::ZeroRotator;break;
+				}
+				SpawnTransform.SetRotation(SpawnRotator.Quaternion());
+				
+				EnemyManager->SpawnEnemy(SpawnTransform,SpawnData.EnemyClass);
 			}
 		}
 	}
-}
-
-void AGoTileManager::SaveGridToDataAsset(UBoardDataAsset* DataAssetToSave)
-{
-	if (!IsValid(DataAssetToSave)) return;
-	
-	DataAssetToSave->X = X;
-	DataAssetToSave->Y = Y;
-	DataAssetToSave->Displacement = Displacement;
-	DataAssetToSave->Tiles.Empty();
-	DataAssetToSave->Tiles.SetNum(Tiles.Num());
-
-	for (int i = 0; i < Tiles.Num(); i++)
-	{
-		AGoTile* Tile = Tiles[i];
-		if (!IsValid(Tile))
-		{
-			DataAssetToSave->Tiles[i] = FGoTileData();
-			continue;
-		}
-
-		FGoTileData& TileData = DataAssetToSave->Tiles[i];
-		TileData.TileClass = Tile->GetClass();
-		TileData.Connections = Tile->Connections;
-		TileData.TileType = Tile->TileType;
-		TileData.Walkable = Tile->Walkable;
-	}
-
-#if WITH_EDITOR
-	DataAssetToSave->Modify();
-	DataAssetToSave->MarkPackageDirty();
-#endif
 }
 
 void AGoTileManager::LoadGridFromDataAsset(UBoardDataAsset* DataAssetToLoad)
@@ -318,7 +233,7 @@ void AGoTileManager::LoadGridFromDataAsset(UBoardDataAsset* DataAssetToLoad)
 	Y = DataAssetToLoad->Y;
 	Displacement = DataAssetToLoad->Displacement;
 
-	TilesSpawnerWDataAsset();
+	TilesSpawner();
 	
 	for (int i = 0; i < Tiles.Num(); i++)
 	{
@@ -329,40 +244,14 @@ void AGoTileManager::LoadGridFromDataAsset(UBoardDataAsset* DataAssetToLoad)
 		if (DataAssetToLoad->Tiles.Num() <= i) break;
 		const FGoTileData& TileData = DataAssetToLoad->Tiles[i];
 		Tile->Connections = TileData.Connections;
+		Tile->Neighbors = TileData.Neighbors;
 		Tile->TileType = TileData.TileType;
 		Tile->Walkable = TileData.Walkable;
 	}
-
-	BuildNeighbors();
+	
 	VisualizeConnections();
 	OnGridGenerated.Broadcast();
 	UE_LOG(LogTemp, Display, TEXT("Broadcast OnGridGenerated"));
 	SpawnEnemies();
-}
-
-
-void AGoTileManager::GenerateGrid()
-{
-	TilesSpawner();
-	BuildNeighbors();
-	BuildConnections();
-	VisualizeConnections();
-}
-
-void AGoTileManager::UpdateConnections()
-{
-	VisualizeConnections();
-}
-
-void AGoTileManager::SaveGrid()
-{
-	if (!IsValid(DataAsset)) return;
-	SaveGridToDataAsset(DataAsset);
-}
-
-void AGoTileManager::LoadGrid()
-{
-	if (!IsValid(DataAsset)) return;
-	LoadGridFromDataAsset(DataAsset);
 }
 

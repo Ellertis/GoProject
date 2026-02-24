@@ -189,10 +189,11 @@ void UGoBoardEditorSubsystem::LoadGridPreviewFromDataAsset(UBoardDataAsset* Data
 		PreviewTiles[i] = Tile;
 		Tile->TileClass = TileData.TileClass;
 		Tile->Connections = TileData.Connections;
+		Tile->Neighbors = TileData.Neighbors;
 		Tile->TileType = TileData.TileType;
 		Tile->Walkable = TileData.Walkable;
+		Tile->Enemies = TileData.Enemies;
 	}
-	BuildNeighbors();
 	VisualizeConnections();
 }
 
@@ -225,6 +226,7 @@ void UGoBoardEditorSubsystem::SavePreviewToDataAsset(UBoardDataAsset* DataAsset)
 		
 		TileData.TileType = Tile->TileType;
 		TileData.Connections = Tile->Connections;
+		TileData.Neighbors = Tile->Neighbors;
 		TileData.Walkable = Tile->Walkable;
 	}
 

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GoPawnEnemy.h"
 #include "GameFramework/Actor.h"
 #include "GoEnemyManager.generated.h"
 
@@ -15,6 +16,12 @@ public:
 	// Sets default values for this actor's properties
 	AGoEnemyManager();
 
+	UPROPERTY(EditAnywhere,BlueprintReadOnly)
+	TArray<AGoPawnEnemy*> Enemies;
+
+	UPROPERTY()
+	int EnemyTurnsRemaining = 0;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -23,4 +30,11 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	void SpawnEnemy(FTransform Transform, TSubclassOf<AGoPawnEnemy> EnemyClass);
+
+	UFUNCTION()
+	void RemoveEnemyFromList(AGoPawnEnemy* EnemyRef);
+
+	UFUNCTION()
+	void OnEnemyMoved();
 };

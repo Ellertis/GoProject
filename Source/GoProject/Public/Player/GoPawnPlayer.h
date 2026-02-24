@@ -59,6 +59,8 @@ protected:
 	UPROPERTY()
 	AGoTileManager* TM;
 
+	FOnPlayerMovement OnPlayerMovement;
+	FOnPlayerDeath OnPlayerDeath;
 
 public:	
 	// Called every frame

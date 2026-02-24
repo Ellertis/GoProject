@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "BoardDataAsset.h"
 #include "GoTile.h"
+#include "Gameplay/Enemies/GoEnemyManager.h"
 #include "GoTileManager.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGridGenerated);
@@ -51,6 +52,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UBoardDataAsset* DataAsset;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	AGoEnemyManager* EnemyManager;
+
 	FOnGridGenerated OnGridGenerated;
 
 protected:
@@ -63,14 +67,8 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-	
+
 	void TilesSpawner();
-
-	void TilesSpawnerWDataAsset();
-
-	void BuildNeighbors(); //Assign neighbours indexes to generated tiles
-	
-	void BuildConnections();
 	
 	int Get1DIndex(int indX, int indY) const; //Convert tile index to place in Tiles array
 
@@ -91,22 +89,7 @@ public:
 	void VisualizeConnections();
 
 	void SpawnEnemies();
-
-	void SaveGridToDataAsset(UBoardDataAsset* DataAssetToSave);
 	
 	void LoadGridFromDataAsset(UBoardDataAsset* DataAssetToLoad);
-	
-	UFUNCTION(CallInEditor)
-	void GenerateGrid();
-
-	UFUNCTION(CallInEditor)
-	void UpdateConnections();
-
-	UFUNCTION(CallInEditor)
-	void SaveGrid();
-
-	UFUNCTION(CallInEditor)
-	void LoadGrid();
-	
 
 };

@@ -11,7 +11,6 @@ void AGoGameModeBase::BeginPlay()
 	TM = Cast<AGoTileManager>(UGameplayStatics::GetActorOfClass(this, AGoTileManager::StaticClass()));
 	if(!TM) return;
 	TM->OnGridGenerated.AddDynamic(this, &AGoGameModeBase::OnGridGenerated);
-	UE_LOG(LogTemp, Display, TEXT("Binded OnGridGenerated"));
 	TM->LoadGridFromDataAsset(TM->DataAsset);
 
 }

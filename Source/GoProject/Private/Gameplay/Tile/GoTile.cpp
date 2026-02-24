@@ -41,8 +41,7 @@ void AGoTile::Tick(float DeltaTime)
 
 void AGoTile::HighLightTile(bool value)
 {
-	if (value) DynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::Green);
-	if (!value) DynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::White);
+	value ? DynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::Green) : DynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::White);
 }
 
 bool AGoTile::HasConnections(ETileConnection Dir) const

@@ -25,3 +25,23 @@ void AGoEnemyManager::Tick(float DeltaTime)
 
 }
 
+void AGoEnemyManager::SpawnEnemy(FTransform Transform, TSubclassOf<AGoPawnEnemy> EnemyClass)
+{
+	AGoPawnEnemy* NewEnemy = GetWorld()->SpawnActor<AGoPawnEnemy>(EnemyClass, Transform);
+	NewEnemy->OnEnemyDeath.AddDynamic(this,&AGoEnemyManager::RemoveEnemyFromList);
+	NewEnemy->OnEnemyMovement.AddDynamic(this,&AGoEnemyManager::OnEnemyMoved);
+	Enemies.Add(NewEnemy);
+	
+}
+
+void AGoEnemyManager::RemoveEnemyFromList(AGoPawnEnemy* EnemyRef)
+{
+	if(!Enemies.Contains(EnemyRef)) return;
+	Enemies.Remove(EnemyRef);
+}
+
+void AGoEnemyManager::OnEnemyMoved()
+{
+	//Keep track of the enemies that moved // finished their turn.
+}
+

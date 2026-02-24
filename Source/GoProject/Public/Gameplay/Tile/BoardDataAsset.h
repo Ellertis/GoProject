@@ -8,6 +8,15 @@
 #include "Gameplay/Enemies/GoPawnEnemy.h"
 #include "BoardDataAsset.generated.h"
 
+UENUM(BlueprintType)
+enum class EFaceDirection : uint8
+{
+	Xplus,
+	Xminus,
+	Yplus,
+	Yminus
+};
+
 USTRUCT()
 struct FEnemySpawnData
 {
@@ -17,7 +26,7 @@ struct FEnemySpawnData
 	TSubclassOf<AGoPawnEnemy> EnemyClass = nullptr;
 
 	UPROPERTY(EditAnywhere)
-	ETileConnection FaceDirection = ETileConnection::Xplus;
+	EFaceDirection FaceDirection = EFaceDirection::Xplus;
 	
 	UPROPERTY(EditAnywhere)
 	int Count = 1;
@@ -33,6 +42,9 @@ struct FGoTileData
     
 	UPROPERTY(EditAnywhere, meta = (Bitmask, BitmaskEnum = "/Script/GoProject/ETileConnection"))
 	int32 Connections = 0;
+
+	UPROPERTY(EditAnywhere)
+	TArray<int> Neighbors;
 
 	UPROPERTY(EditAnywhere)
 	ETileType TileType = ETileType::Empty;
