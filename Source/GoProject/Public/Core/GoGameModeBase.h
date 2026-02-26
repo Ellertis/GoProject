@@ -25,6 +25,18 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Classes")
 	TSubclassOf<AGoPawnPlayer> PlayerPawnClass;
 
+	UPROPERTY(EditDefaultsOnly, Category="Classes")
+	TSubclassOf<AGoEnemyManager> EnemyManagerClass;
+
+	UPROPERTY()
+	AGoEnemyManager* EnemyManager;
+
+	UPROPERTY(EditDefaultsOnly, Category="Classes")
+	TSubclassOf<AGoTurnManager> TurnManagerClass;
+
+	UPROPERTY()
+	AGoTurnManager* TurnManager;
+
 private:
 	UPROPERTY()
 	AGoCameraActor* CameraActor;
@@ -44,4 +56,8 @@ private:
 	void SpawnPlayer();
 
 	void SpawnCamera();
+	
+	void SpawnEnemyManager();
+	
+	void SpawnTurnManager();
 };

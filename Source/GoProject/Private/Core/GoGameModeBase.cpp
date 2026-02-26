@@ -8,17 +8,29 @@
 void AGoGameModeBase::BeginPlay()
 {
     Super::BeginPlay();
-	TM = Cast<AGoTileManager>(UGameplayStatics::GetActorOfClass(this, AGoTileManager::StaticClass()));
+	TM = Cast<AGoTileManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGoTileManager::StaticClass()));
 	if(!TM) return;
+	SpawnEnemyManager();
+	if(!EnemyManager)return;
+	SpawnTurnManager();
+	if(!TurnManager)return;
+	
+	TurnManager->OnTurnPhaseChanged.AddDynamic(EnemyManager,&AGoEnemyManager::OnNewEnemyTurn);
+	
+	EnemyManager->NoRemainingEnemyTurns.AddDynamic(TurnManager,&AGoTurnManager::OnNoEnemyTurnsLeft);
+	EnemyManager->TileManager = TM;
+	
 	TM->OnGridGenerated.AddDynamic(this, &AGoGameModeBase::OnGridGenerated);
+	TM->EnemyManager = EnemyManager;
 	TM->LoadGridFromDataAsset(TM->DataAsset);
-
 }
 
 void AGoGameModeBase::OnGridGenerated()
 {
 	SpawnPlayer();
+	PlayerPawn->TurnManager = TurnManager;
 	SpawnCamera();
+	TurnManager->StartGame();
 }
 
 void AGoGameModeBase::SpawnPlayer()
@@ -31,7 +43,7 @@ void AGoGameModeBase::SpawnPlayer()
 		FRotator::ZeroRotator
 	);
 	
-	PlayerController = Cast<AGoPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
+	PlayerController = Cast<AGoPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
 	if(!PlayerController) return;
 	PlayerController->Possess(PlayerPawn);
 	UE_LOG(LogTemp, Display, TEXT("SpawnPlayer & Possess"));
@@ -42,7 +54,7 @@ void AGoGameModeBase::SpawnCamera()
 	if (!CameraActorClass) return;
 
 	APlayerStart* PlayerStart = Cast<APlayerStart>(
-		UGameplayStatics::GetActorOfClass(this, APlayerStart::StaticClass()));
+		UGameplayStatics::GetActorOfClass(GetWorld(), APlayerStart::StaticClass()));
 	if (!PlayerStart) return;
 
 	FVector CameraLocation = PlayerStart->GetActorLocation();
@@ -56,4 +68,24 @@ void AGoGameModeBase::SpawnCamera()
 
 	PlayerController->SetViewTarget(CameraActor);
 	UE_LOG(LogTemp, Display, TEXT("Spawn Camera & Finished"));
+}
+
+void AGoGameModeBase::SpawnEnemyManager()
+{
+	if(!EnemyManagerClass)return;
+	EnemyManager = GetWorld()->SpawnActor<AGoEnemyManager>(
+		EnemyManagerClass,
+		FVector(0, 0, 0),
+		FRotator::ZeroRotator
+	);
+}
+
+void AGoGameModeBase::SpawnTurnManager()
+{
+	if(!TurnManagerClass)return;
+	TurnManager = GetWorld()->SpawnActor<AGoTurnManager>(
+		TurnManagerClass,
+		FVector(0, 0, 0),
+		FRotator::ZeroRotator
+	);
 }

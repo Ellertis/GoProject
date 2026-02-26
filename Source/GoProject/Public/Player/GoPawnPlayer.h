@@ -45,9 +45,6 @@ protected:
 	bool bCanClickTile = false;
 	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Player|Tile")
-	AGoTile* CurrTile;
-	
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Player|Tile")
 	AGoTile* TargetTile;
 	
 	UPROPERTY()
@@ -71,11 +68,15 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	UPROPERTY()
+	AGoTurnManager* TurnManager;
 	
 	void PlacePlayer(AGoTile* Tile);
 
 private:
 	void OnClickTrigger();
+	
 	void OnClickReleased();
 	
 	TArray<AGoTile*> GetValidMoveTiles() const;
@@ -83,5 +84,7 @@ private:
 	void MoveToTile(AGoTile* Tile);
 
 	void ToggleHighlightNeighbors(bool value) const;
+
+	void  FinishTurn() const;
 	
 };

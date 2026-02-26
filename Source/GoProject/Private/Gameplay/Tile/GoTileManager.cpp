@@ -1,10 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Gameplay/Tile/GoTileManager.h"
-
-#include "Constraint.h"
-#include "IContentBrowserSingleton.h"
-#include "Dataflow/DataflowSelection.h"
 #include "Math/IntPoint.h"
 
 static const TArray<TPair<FIntPoint, ETileConnection>> Directions =
@@ -40,8 +36,6 @@ void AGoTileManager::BeginPlay()
 {
 	Super::BeginPlay();
 
-	EnemyManager = GetWorld()->SpawnActor<AGoEnemyManager>(EnemyManagerClass, FVector::ZeroVector, FRotator::ZeroRotator);
-	TurnManager = GetWorld()->SpawnActor<AGoTurnManager>(TurnManagerClass, FVector::ZeroVector, FRotator::ZeroRotator);
 }
 
 // Called every frame
@@ -224,7 +218,7 @@ void AGoTileManager::SpawnEnemies()
 				}
 				SpawnTransform.SetRotation(SpawnRotator.Quaternion());
 				
-				EnemyManager->SpawnEnemy(SpawnTransform,SpawnData.EnemyClass);
+				EnemyManager->SpawnEnemy(SpawnTransform,SpawnData.EnemyClass,Tiles[i],SpawnData.FaceDirection);
 			}
 		}
 	}

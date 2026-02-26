@@ -72,6 +72,7 @@ void AGoPawnPlayer::PlacePlayer(AGoTile* Tile)
 
 void AGoPawnPlayer::OnClickTrigger()
 {
+	if(TurnManager->CurrentTurnPhase != ETurnPhase::PlayerTurn) return;
 	UE_LOG(LogTemp, Warning, TEXT("OnClickTrigger"));
 	//if(!bCanClickTile) return;
 	FHitResult HitResult;
@@ -86,6 +87,7 @@ void AGoPawnPlayer::OnClickTrigger()
 
 void AGoPawnPlayer::OnClickReleased()
 {
+	if(TurnManager->CurrentTurnPhase != ETurnPhase::PlayerTurn) return;
 	UE_LOG(LogTemp, Warning, TEXT("OnClickReleased"));
 	FHitResult HitResult;
 	PlayerController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Click), true,HitResult);
@@ -108,6 +110,9 @@ void AGoPawnPlayer::MoveToTile(AGoTile* Tile)
 	if (!GetValidMoveTiles().Contains(Tile)) return;
 	SetActorLocation(Tile->GetActorLocation()+FVector(0,0,100));
 	CurrTile = Tile;
+
+	//await player arrive to tile
+	FinishTurn();
 }
 
 void AGoPawnPlayer::ToggleHighlightNeighbors(bool value) const
@@ -117,4 +122,11 @@ void AGoPawnPlayer::ToggleHighlightNeighbors(bool value) const
 	{
 		Tile->HighLightTile(value);
 	}
+}
+
+void AGoPawnPlayer::FinishTurn() const
+{
+	if(!IsValid(TurnManager)) return;
+	TurnManager->PlayerMoved();
+	UE_LOG(LogTemp,Warning,TEXT("Called PLayer Moved"));
 }

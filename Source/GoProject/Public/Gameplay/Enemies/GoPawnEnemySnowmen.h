@@ -13,9 +13,5 @@ UCLASS()
 class GOPROJECT_API AGoPawnEnemySnowmen : public AGoPawnEnemy
 {
 	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Enemy|Movement")
-	ETileConnection Direction;
 	
 };

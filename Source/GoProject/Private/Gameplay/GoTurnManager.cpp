@@ -7,7 +7,7 @@
 AGoTurnManager::AGoTurnManager()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 }
 
@@ -18,6 +18,13 @@ void AGoTurnManager::BeginPlay()
 	
 }
 
+void AGoTurnManager::SetTurnPhase(ETurnPhase NewTurnPhase)
+{
+	CurrentTurnPhase = NewTurnPhase;
+	OnTurnPhaseChanged.Broadcast(CurrentTurnPhase);
+	UE_LOG(LogTemp, Display, TEXT("Turn Phase Changed"));
+}
+
 // Called every frame
 void AGoTurnManager::Tick(float DeltaTime)
 {
@@ -25,3 +32,17 @@ void AGoTurnManager::Tick(float DeltaTime)
 
 }
 
+void AGoTurnManager::StartGame()
+{
+	SetTurnPhase(ETurnPhase::PlayerTurn);
+}
+
+void AGoTurnManager::PlayerMoved()
+{
+	SetTurnPhase(ETurnPhase::EnemyTurn);
+}
+
+void AGoTurnManager::OnNoEnemyTurnsLeft()
+{
+	SetTurnPhase(ETurnPhase::PlayerTurn);
+}
