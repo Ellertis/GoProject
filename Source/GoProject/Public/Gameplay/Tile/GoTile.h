@@ -41,6 +41,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UStaticMeshComponent* MeshComponent;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UStaticMeshComponent* DebugMeshComponent;
 
 	// Variables
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -48,6 +51,9 @@ public:
 
 	UPROPERTY()
 	UMaterialInstanceDynamic* DynamicMaterial;
+
+	UPROPERTY()
+	UMaterialInstanceDynamic* DebugDynamicMaterial;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UMaterial* Material;
@@ -79,6 +85,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	void UpdateDebugColors() const;
+	
 	void HighLightTile(bool value);
 
 	bool HasConnections(ETileConnection Dir) const;

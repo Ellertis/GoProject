@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "BoardDataAsset.h"
 #include "GoTile.h"
+#include "Gameplay/GoTurnManager.h"
 #include "Gameplay/Enemies/GoEnemyManager.h"
 #include "GoTileManager.generated.h"
 
@@ -45,19 +46,27 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<AGoTile*> Tiles;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)	
-	TSubclassOf<AGoTile> TileClass;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UBoardDataAsset* DataAsset;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(BlueprintReadOnly)
 	AGoEnemyManager* EnemyManager;
 
+	UPROPERTY(BlueprintReadOnly)
+	AGoTurnManager* TurnManager;
+
+	UPROPERTY()
 	FOnGridGenerated OnGridGenerated;
 
 protected:
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AGoEnemyManager> EnemyManagerClass;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AGoTurnManager> TurnManagerClass;
+	
 	// Called in editor and on spawn
 	virtual void OnConstruction(const FTransform& Transform) override;
 	

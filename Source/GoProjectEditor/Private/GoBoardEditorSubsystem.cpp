@@ -193,6 +193,8 @@ void UGoBoardEditorSubsystem::LoadGridPreviewFromDataAsset(UBoardDataAsset* Data
 		Tile->TileType = TileData.TileType;
 		Tile->Walkable = TileData.Walkable;
 		Tile->Enemies = TileData.Enemies;
+		
+		Tile->UpdateDebugColors(); // Updates the debug color on the tile
 	}
 	VisualizeConnections();
 }

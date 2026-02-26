@@ -2,7 +2,9 @@
 
 #include "Gameplay/Tile/GoTileManager.h"
 
+#include "Constraint.h"
 #include "IContentBrowserSingleton.h"
+#include "Dataflow/DataflowSelection.h"
 #include "Math/IntPoint.h"
 
 static const TArray<TPair<FIntPoint, ETileConnection>> Directions =
@@ -37,6 +39,9 @@ void AGoTileManager::OnConstruction(const FTransform& Transform)
 void AGoTileManager::BeginPlay()
 {
 	Super::BeginPlay();
+
+	EnemyManager = GetWorld()->SpawnActor<AGoEnemyManager>(EnemyManagerClass, FVector::ZeroVector, FRotator::ZeroRotator);
+	TurnManager = GetWorld()->SpawnActor<AGoTurnManager>(TurnManagerClass, FVector::ZeroVector, FRotator::ZeroRotator);
 }
 
 // Called every frame
@@ -247,6 +252,7 @@ void AGoTileManager::LoadGridFromDataAsset(UBoardDataAsset* DataAssetToLoad)
 		Tile->Neighbors = TileData.Neighbors;
 		Tile->TileType = TileData.TileType;
 		Tile->Walkable = TileData.Walkable;
+		Tile->UpdateDebugColors(); //Updates the debug color on the tile
 	}
 	
 	VisualizeConnections();
