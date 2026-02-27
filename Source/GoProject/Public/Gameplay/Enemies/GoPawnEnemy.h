@@ -4,21 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "Core/GoPawn.h"
+#include "Gameplay/Tile/BoardDataAsset.h"
 #include "GoPawnEnemy.generated.h"
 
 class AGoTileManager;
-class UBoardDataAsset;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnEnemyMovement);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnemyDeath, AGoPawnEnemy*,EnemyRef);
-
-UENUM(BlueprintType)
-enum class EFaceDirection : uint8
-{
-	Xplus,
-	Xminus,
-	Yplus,
-	Yminus
-};
 
 UCLASS()
 class GOPROJECT_API AGoPawnEnemy : public AGoPawn
@@ -44,4 +36,6 @@ protected:
 	EFaceDirection GetOppositeDirection() const;
 
 	void EnemyMovement();
+
+	void ReverseEnemyMovement(FIntPoint CurrTileCoord);
 };

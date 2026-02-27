@@ -56,9 +56,6 @@ protected:
 	UPROPERTY()
 	AGoTileManager* TM;
 
-	FOnPlayerMovement OnPlayerMovement;
-	FOnPlayerDeath OnPlayerDeath;
-
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -69,10 +66,13 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	void PlacePlayer(AGoTile* Tile);
+	
 	UPROPERTY()
 	AGoTurnManager* TurnManager;
-	
-	void PlacePlayer(AGoTile* Tile);
+
+	FOnPlayerMovement OnPlayerMovement;
+	FOnPlayerDeath OnPlayerDeath;
 
 private:
 	void OnClickTrigger();

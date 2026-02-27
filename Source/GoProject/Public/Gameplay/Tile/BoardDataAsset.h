@@ -5,9 +5,9 @@
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
 #include "GoTile.h"
-#include "Gameplay/Enemies/GoPawnEnemy.h"
 #include "BoardDataAsset.generated.h"
 
+class AGoPawnEnemy;
 UENUM(BlueprintType)
 enum class EFaceDirection : uint8
 {

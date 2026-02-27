@@ -29,6 +29,7 @@ void AGoGameModeBase::OnGridGenerated()
 {
 	SpawnPlayer();
 	PlayerPawn->TurnManager = TurnManager;
+	PlayerPawn->OnPlayerMovement.AddDynamic(TurnManager,&AGoTurnManager::PlayerMoved);
 	SpawnCamera();
 	TurnManager->StartGame();
 }

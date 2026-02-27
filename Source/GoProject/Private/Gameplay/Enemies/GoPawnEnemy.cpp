@@ -10,18 +10,49 @@ void AGoPawnEnemy::EnemyMovement()
 {
 	if(!TileManager) return;
 	
-	int const CurrTileIndex = TileManager->Tiles.IndexOfByKey(CurrTile);
+	int CurrTileIndex = TileManager->Tiles.IndexOfByKey(CurrTile);
 	if (CurrTileIndex == INDEX_NONE){UE_LOG(LogTemp, Error, TEXT("PawnEnemy: Current tile not in grid!"))return;}
 
 	FIntPoint CurrTileCoord = TileManager->Get2DIndex(CurrTileIndex);
 	FIntPoint TargetTileCoord = CurrTileCoord+GetDirectionDelta();
+	
+	int TargetTileIndex = TileManager->Get1DIndex(TargetTileCoord.X, TargetTileCoord.Y);
+	AGoTile* TargetTile = TileManager->Tiles[TargetTileIndex];
 
+	if(!TargetTile){UE_LOG(LogTemp, Error, TEXT("PawnEnemy: Target Tile invalid after fetching"))return;}
+	if(!TargetTile->Walkable)return;
+
+	SetActorLocation(TargetTile->GetActorLocation()+FVector(0,0,100));
+	CurrTile = TargetTile;
+
+	//Checking if the next tile is walkable, if not, rotate 180 and inverse Direction
+	CurrTileCoord = TargetTileCoord;
+	
+	TargetTileCoord = CurrTileCoord+GetDirectionDelta();
 	if(!TileManager->IsValidIndex(TargetTileCoord.X, TargetTileCoord.Y))
 	{
 		//Invalid Target Tile
 		Direction = GetOppositeDirection(); // New direction (reversed direction)
+		AddActorLocalRotation(FRotator(0,180,0));
 		UE_LOG(LogTemp,Warning,TEXT("InvalidTargetTile"));
-		//EnemyMovement(); Should be replace with a different function that does almost the same thing but dont tries to rerun itself
+		//ReverseEnemyMovement(CurrTileCoord);
+	}
+	
+	FinishTurn();
+	
+}
+
+void AGoPawnEnemy::ReverseEnemyMovement(FIntPoint CurrTileCoord)
+{
+	if(!TileManager) return;
+	FIntPoint TargetTileCoord = CurrTileCoord+GetDirectionDelta();
+	
+	if(!TileManager->IsValidIndex(TargetTileCoord.X, TargetTileCoord.Y))
+	{
+		//Invalid Target Tile
+		UE_LOG(LogTemp,Warning,TEXT("Reverse InvalidTargetTile"));
+		FinishTurn();
+		return;
 	}
 
 	int TargetTileIndex = TileManager->Get1DIndex(TargetTileCoord.X, TargetTileCoord.Y);
@@ -30,7 +61,7 @@ void AGoPawnEnemy::EnemyMovement()
 	if(!TargetTile){UE_LOG(LogTemp, Error, TEXT("PawnEnemy: Target Tile invalid after fetching"))return;}
 	if(!TargetTile->Walkable)return;
 
-	SetActorLocation(TargetTile->GetActorLocation()+FVector(0,0,100));
+	SetActorLocation(TargetTile->GetActorLocation()+FVector(0,0,TileManager->ZOffset*2));
 	CurrTile = TargetTile;
 	
 	FinishTurn();
@@ -56,6 +87,7 @@ EFaceDirection AGoPawnEnemy::GetOppositeDirection() const
 		case EFaceDirection::Xminus: return EFaceDirection::Xplus;
 		case EFaceDirection::Yplus: return EFaceDirection::Yminus;
 		case EFaceDirection::Yminus: return EFaceDirection::Yplus;
+		default: return EFaceDirection::Xplus;
 	}
 }
 

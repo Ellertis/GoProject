@@ -28,6 +28,7 @@ public:
 
 	void StartGame();
 
+	UFUNCTION()
 	void PlayerMoved();
 
 	UFUNCTION()

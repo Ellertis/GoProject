@@ -74,7 +74,7 @@ void AGoPawnPlayer::OnClickTrigger()
 {
 	if(TurnManager->CurrentTurnPhase != ETurnPhase::PlayerTurn) return;
 	UE_LOG(LogTemp, Warning, TEXT("OnClickTrigger"));
-	//if(!bCanClickTile) return;
+	//if(!bCanClickTile) return; TODO
 	FHitResult HitResult;
 	PlayerController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Click), true, HitResult);
 	if (this == Cast<AGoPawnPlayer>(HitResult.GetActor()))
@@ -126,7 +126,6 @@ void AGoPawnPlayer::ToggleHighlightNeighbors(bool value) const
 
 void AGoPawnPlayer::FinishTurn() const
 {
-	if(!IsValid(TurnManager)) return;
-	TurnManager->PlayerMoved();
-	UE_LOG(LogTemp,Warning,TEXT("Called PLayer Moved"));
+	OnPlayerMovement.Broadcast();
+	UE_LOG(LogTemp,Warning,TEXT("Called OnPlayerMovement.Broadcast"));
 }
