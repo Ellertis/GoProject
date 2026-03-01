@@ -4,6 +4,7 @@
 #include "Core/GoGameModeBase.h"
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
+#include "Slate/SGameLayerManager.h"
 
 void AGoGameModeBase::BeginPlay()
 {
@@ -18,11 +19,22 @@ void AGoGameModeBase::BeginPlay()
 	TurnManager->OnTurnPhaseChanged.AddDynamic(EnemyManager,&AGoEnemyManager::OnNewEnemyTurn);
 	
 	EnemyManager->NoRemainingEnemyTurns.AddDynamic(TurnManager,&AGoTurnManager::OnNoEnemyTurnsLeft);
+	EnemyManager->GunterIsDead.AddDynamic(this, &AGoGameModeBase::AGoGameModeBase::GameOver);
 	EnemyManager->TileManager = TM;
 	
 	TM->OnGridGenerated.AddDynamic(this, &AGoGameModeBase::OnGridGenerated);
 	TM->EnemyManager = EnemyManager;
 	TM->LoadGridFromDataAsset(TM->DataAsset);
+}
+
+void AGoGameModeBase::GameOver()
+{
+	// Call UI //Restart Level 
+}
+
+AGoPawnPlayer* AGoGameModeBase::GetPlayer() const
+{
+	return PlayerPawn;
 }
 
 void AGoGameModeBase::OnGridGenerated()

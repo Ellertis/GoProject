@@ -6,71 +6,57 @@
 #include "Gameplay/Tile/GoTileManager.h"
 
 
-void AGoPawnEnemy::EnemyMovement()
+void AGoPawnEnemy::PreTurnUpdate_Implementation()
 {
-	if(!TileManager) return;
-	
-	int CurrTileIndex = TileManager->Tiles.IndexOfByKey(CurrTile);
-	if (CurrTileIndex == INDEX_NONE){UE_LOG(LogTemp, Error, TEXT("PawnEnemy: Current tile not in grid!"))return;}
-
-	FIntPoint CurrTileCoord = TileManager->Get2DIndex(CurrTileIndex);
-	FIntPoint TargetTileCoord = CurrTileCoord+GetDirectionDelta();
-	
-	int TargetTileIndex = TileManager->Get1DIndex(TargetTileCoord.X, TargetTileCoord.Y);
-	AGoTile* TargetTile = TileManager->Tiles[TargetTileIndex];
-
-	if(!TargetTile){UE_LOG(LogTemp, Error, TEXT("PawnEnemy: Target Tile invalid after fetching"))return;}
-	if(!TargetTile->Walkable)return;
-
-	SetActorLocation(TargetTile->GetActorLocation()+FVector(0,0,100));
-	CurrTile = TargetTile;
-
-	//Checking if the next tile is walkable, if not, rotate 180 and inverse Direction
-	CurrTileCoord = TargetTileCoord;
-	
-	TargetTileCoord = CurrTileCoord+GetDirectionDelta();
-	if(!TileManager->IsValidIndex(TargetTileCoord.X, TargetTileCoord.Y))
-	{
-		//Invalid Target Tile
-		Direction = GetOppositeDirection(); // New direction (reversed direction)
-		AddActorLocalRotation(FRotator(0,180,0));
-		UE_LOG(LogTemp,Warning,TEXT("InvalidTargetTile"));
-		//ReverseEnemyMovement(CurrTileCoord);
-	}
-	
-	FinishTurn();
 	
 }
 
-void AGoPawnEnemy::ReverseEnemyMovement(FIntPoint CurrTileCoord)
+FEnemyMoveIntent AGoPawnEnemy::ComputeMoveIntent_Implementation() const
 {
-	if(!TileManager) return;
-	FIntPoint TargetTileCoord = CurrTileCoord+GetDirectionDelta();
-	
-	if(!TileManager->IsValidIndex(TargetTileCoord.X, TargetTileCoord.Y))
-	{
-		//Invalid Target Tile
-		UE_LOG(LogTemp,Warning,TEXT("Reverse InvalidTargetTile"));
-		FinishTurn();
-		return;
-	}
+	UE_LOG(LogTemp, Error, TEXT("AGoPawnEnemy::ComputeMoveIntent_Implementation called directly! Derived class must override this method."));
 
-	int TargetTileIndex = TileManager->Get1DIndex(TargetTileCoord.X, TargetTileCoord.Y);
-	AGoTile* TargetTile = TileManager->Tiles[TargetTileIndex];
-
-	if(!TargetTile){UE_LOG(LogTemp, Error, TEXT("PawnEnemy: Target Tile invalid after fetching"))return;}
-	if(!TargetTile->Walkable)return;
-
-	SetActorLocation(TargetTile->GetActorLocation()+FVector(0,0,TileManager->ZOffset*2));
-	CurrTile = TargetTile;
-	
-	FinishTurn();
-	
+	FEnemyMoveIntent Intent;
+	Intent.TargetTile = CurrTile; 
+	Intent.NewDirection = Direction;
+	return Intent;
 }
 
-FIntPoint AGoPawnEnemy::GetDirectionDelta() const
+
+void AGoPawnEnemy::ApplyMoveIntent_Implementation(const FEnemyMoveIntent& Intent)
 {
+	if (!Intent.TargetTile) return;
+	
+	float ZOffset = TileManager ? TileManager->ZOffset * 2 : 100.0f;
+	SetActorLocation(Intent.TargetTile->GetActorLocation() + FVector(0, 0, ZOffset));
+	
+	CurrTile = Intent.TargetTile;
+	
+	Direction = Intent.NewDirection;
+	FRotator NewRotation;
 	switch (Direction)
+	{
+		case EFaceDirection::Xplus:  NewRotation = FRotator(0, 0, 0); break;
+		case EFaceDirection::Xminus: NewRotation = FRotator(0, 180, 0); break;
+		case EFaceDirection::Yplus:  NewRotation = FRotator(0, 90, 0); break;
+		case EFaceDirection::Yminus: NewRotation = FRotator(0, -90, 0); break;
+	}
+	SetActorRotation(NewRotation);
+}
+
+
+void AGoPawnEnemy::OnPostMove_Implementation()
+{
+	UE_LOG(LogTemp, Error, TEXT("AGoPawnEnemy::OnPostMove_Implementation called directly! Derived class must override this method."));
+}
+
+void AGoPawnEnemy::ApplyDamage_Implementation(int Amount)
+{
+	UE_LOG(LogTemp, Error, TEXT("AGoPawnEnemy::TakeDamage_Implementation called directly! Derived class must override this method."));
+}
+
+FIntPoint AGoPawnEnemy::GetDirectionDelta(const EFaceDirection DirectionValue) const
+{
+	switch (DirectionValue)
 	{
 		case EFaceDirection::Xplus: return FIntPoint(1,0);
 		case EFaceDirection::Xminus: return FIntPoint(-1,0);
@@ -78,6 +64,16 @@ FIntPoint AGoPawnEnemy::GetDirectionDelta() const
 		case EFaceDirection::Yminus: return FIntPoint(0,-1);
 		default: return FIntPoint(0,0);
 	}
+}
+
+EFaceDirection AGoPawnEnemy::GetDirectionFromDelta(FIntPoint& Delta) const
+{
+	if (Delta.X > 0) return EFaceDirection::Xplus;
+	if (Delta.X < 0) return EFaceDirection::Xminus;
+	if (Delta.Y > 0) return EFaceDirection::Yplus;
+	if (Delta.Y < 0) return EFaceDirection::Yminus;
+	UE_LOG(LogTemp,Error,TEXT("GoPawnEnemy Normally unreachable path reached, GetDirectionFromDelta input Delta is (0,0)"));
+	return Direction;
 }
 
 EFaceDirection AGoPawnEnemy::GetOppositeDirection() const
@@ -89,14 +85,4 @@ EFaceDirection AGoPawnEnemy::GetOppositeDirection() const
 		case EFaceDirection::Yminus: return EFaceDirection::Yplus;
 		default: return EFaceDirection::Xplus;
 	}
-}
-
-void AGoPawnEnemy::StartTurn()
-{
-	EnemyMovement();
-}
-
-void AGoPawnEnemy::FinishTurn()
-{
-	OnEnemyMovement.Broadcast();
 }

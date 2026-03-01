@@ -24,7 +24,6 @@ public:
 	UStaticMeshComponent* MeshComponent;
 
 	//Variables
-
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Pawn|Tile")
 	AGoTile* CurrTile;
 

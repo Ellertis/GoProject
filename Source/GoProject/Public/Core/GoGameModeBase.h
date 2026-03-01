@@ -18,6 +18,12 @@ public:
 	UFUNCTION()
 	virtual void BeginPlay() override;
 
+	UFUNCTION()
+	void GameOver();
+
+	UFUNCTION()
+	AGoPawnPlayer* GetPlayer() const;
+
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Classes")
 	TSubclassOf<AGoCameraActor> CameraActorClass;
@@ -28,11 +34,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Classes")
 	TSubclassOf<AGoEnemyManager> EnemyManagerClass;
 
-	UPROPERTY()
-	AGoEnemyManager* EnemyManager;
-
 	UPROPERTY(EditDefaultsOnly, Category="Classes")
 	TSubclassOf<AGoTurnManager> TurnManagerClass;
+	
+	UPROPERTY()
+	AGoEnemyManager* EnemyManager;
 
 	UPROPERTY()
 	AGoTurnManager* TurnManager;

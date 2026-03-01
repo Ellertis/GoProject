@@ -201,20 +201,15 @@ void AGoTileManager::SpawnEnemies()
 			{
 				FTransform SpawnTransform;
 				SpawnTransform.SetLocation(Tile->GetActorLocation() + FVector(0,0,ZOffset+ZOffset));
-				
+
 				FRotator SpawnRotator;
 				switch(SpawnData.FaceDirection)
 				{
-					case EFaceDirection::Xplus:
-						SpawnRotator = GetActorForwardVector().Rotation();break;
-					case EFaceDirection::Xminus:
-						SpawnRotator = (-GetActorForwardVector()).Rotation();break;
-					case EFaceDirection::Yplus:
-						SpawnRotator = GetActorRightVector().Rotation();break;
-					case EFaceDirection::Yminus:
-						SpawnRotator = (-GetActorRightVector()).Rotation();break;
-					default:
-						SpawnRotator = FRotator::ZeroRotator;break;
+					case EFaceDirection::Xplus: SpawnRotator = GetActorForwardVector().Rotation();break;
+					case EFaceDirection::Xminus: SpawnRotator = (-GetActorForwardVector()).Rotation();break;
+					case EFaceDirection::Yplus: SpawnRotator = GetActorRightVector().Rotation();break;
+					case EFaceDirection::Yminus: SpawnRotator = (-GetActorRightVector()).Rotation();break;
+					default: SpawnRotator = FRotator::ZeroRotator;break;
 				}
 				SpawnTransform.SetRotation(SpawnRotator.Quaternion());
 				
