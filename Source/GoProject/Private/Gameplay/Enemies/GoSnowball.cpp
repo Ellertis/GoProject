@@ -69,7 +69,7 @@ void AGoSnowball::Tick(float DeltaTime)
 	float Distance = FVector::Dist(Current, TargetLocation);
 	float Step = Speed * DeltaTime;
 
-	if (Step >= Distance)
+	if (GetActorLocation().Equals(TargetLocation))
 	{
 		SetActorLocation(TargetLocation);
 		bMoving = false;

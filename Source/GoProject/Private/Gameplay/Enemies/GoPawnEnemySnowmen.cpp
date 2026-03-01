@@ -1,7 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Gameplay/Tile/GoTileManager.h"
 #include "Gameplay/Enemies/GoPawnEnemySnowmen.h"
+#include "Gameplay/Enemies/GoEnemyManager.h"
+#include "Gameplay/Tile/GoTileManager.h"
 
 FEnemyMoveIntent AGoPawnEnemySnowmen::ComputeMoveIntent_Implementation() const
 {
@@ -19,15 +20,15 @@ FEnemyMoveIntent AGoPawnEnemySnowmen::ComputeMoveIntent_Implementation() const
 
 	int TargetIndex = TileManager->Get1DIndex(TargetCoord.X, TargetCoord.Y);
 	AGoTile* TargetTile = TileManager->Tiles[TargetIndex];
-	// if target tile is not walkable, rotate
-	if (!TargetTile || !TargetTile->Walkable){Intent.NewDirection = GetOppositeDirection(); return Intent;}
+	// if target tile is not walkable or occupied, rotate
+	if (!TargetTile || !TargetTile->Walkable || EnemyManager->IsTileOccupied(TargetIndex,this)){Intent.NewDirection = GetOppositeDirection(); return Intent;}
 	
 	Intent.TargetTile = TargetTile;
 	FIntPoint BeyondCoord = TargetCoord + GetDirectionDelta(Direction);
 	// if beyond tile is out of grid rotate when moving to the next tile
 	if (!TileManager->IsValidIndex(BeyondCoord.X, BeyondCoord.Y)){Intent.NewDirection = GetOppositeDirection(); return Intent;}
 
-	int32 BeyondIndex = TileManager->Get1DIndex(BeyondCoord.X, BeyondCoord.Y);
+	int BeyondIndex = TileManager->Get1DIndex(BeyondCoord.X, BeyondCoord.Y);
 	AGoTile* BeyondTile = TileManager->Tiles[BeyondIndex];
 	// if beyond tile is unwalkable rotate when moving to the next tile
 	if (!BeyondTile || !BeyondTile->Walkable)Intent.NewDirection = GetOppositeDirection();

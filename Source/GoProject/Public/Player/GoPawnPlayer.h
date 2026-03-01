@@ -8,6 +8,8 @@
 #include "Gameplay/Tile/GoTileManager.h"
 #include "GoPawnPlayer.generated.h"
 
+class AGoEnemyManager;
+
 #define  ECC_Click ECollisionChannel::ECC_GameTraceChannel1
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerMovement);
@@ -55,6 +57,9 @@ protected:
 
 	UPROPERTY()
 	AGoTileManager* TM;
+	
+	UPROPERTY()
+	AGoEnemyManager* EnemyManager;
 
 public:	
 	// Called every frame
@@ -73,6 +78,10 @@ public:
 
 	FOnPlayerMovement OnPlayerMovement;
 	FOnPlayerDeath OnPlayerDeath;
+	
+	UFUNCTION(BlueprintNativeEvent)
+	void MoveToTile(AGoTile* Tile);
+	virtual void MoveToTile_Implementation(AGoTile* Tile);
 
 private:
 	void OnClickTrigger();
@@ -80,8 +89,6 @@ private:
 	void OnClickReleased();
 	
 	TArray<AGoTile*> GetValidMoveTiles() const;
-
-	void MoveToTile(AGoTile* Tile);
 
 	void ToggleHighlightNeighbors(bool value) const;
 

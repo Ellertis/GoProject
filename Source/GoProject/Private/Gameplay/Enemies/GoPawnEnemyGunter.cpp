@@ -2,7 +2,7 @@
 
 
 #include "Gameplay/Enemies/GoPawnEnemyGunter.h"
-
+#include "Gameplay/Enemies/GoEnemyManager.h"
 #include "Core/GoGameModeBase.h"
 
 AGoPawnEnemyGunter::AGoPawnEnemyGunter()
@@ -48,9 +48,7 @@ void AGoPawnEnemyGunter::PreTurnUpdate_Implementation()
 		{
 			EFaceDirection ChosenDir = (LeftCount >= RightCount) ? LeftDir : RightDir;
 			StartFleeing(true, ChosenDir);
-			return;
 		}
-		//TODO// No perpendicular path either // Push the player back
 	}
 }
 
@@ -63,20 +61,21 @@ FEnemyMoveIntent AGoPawnEnemyGunter::ComputeMoveIntent_Implementation() const
 	if (!TileManager || !CurrTile || !PlayerRef || !bIsFleeing) return Intent;
 
 	FIntPoint GunterCoord = TileManager->Get2DIndex(CurrTile->Index);
-	int32 PlayerTileIndex = PlayerRef->CurrTile->Index;
+	int PlayerTileIndex = PlayerRef->CurrTile->Index;
 	
 	FIntPoint TargetCoord = GunterCoord + GetDirectionDelta(Direction);
 	if (TileManager->IsValidIndex(TargetCoord.X, TargetCoord.Y))
 	{
-		int32 TargetIndex = TileManager->Get1DIndex(TargetCoord.X, TargetCoord.Y);
+		int TargetIndex = TileManager->Get1DIndex(TargetCoord.X, TargetCoord.Y);
 		AGoTile* TargetTile = TileManager->Tiles[TargetIndex];
-		if (TargetTile && TargetTile->Walkable && TargetIndex != PlayerTileIndex)
+		//if target tile is walkable and not ocupied
+		if (TargetTile && TargetTile->Walkable && TargetIndex != PlayerTileIndex && !EnemyManager->IsTileOccupied(TargetIndex,this))
 		{
 			Intent.TargetTile = TargetTile;
 			return Intent;
 		}
 	}
-	.
+	//If forward blocked, dont move
 	return Intent;
 }
 
@@ -132,7 +131,7 @@ int AGoPawnEnemyGunter::CountWalkableTilesInDirection(const FIntPoint& StartCoor
 void AGoPawnEnemyGunter::BeginPlay()
 {
 	Super::BeginPlay();
-	const AGoGameModeBase* GameModeBase = (AGoGameModeBase*)GetWorld()->GetAuthGameMode();
+	const AGoGameModeBase* GameModeBase = static_cast<AGoGameModeBase*>(GetWorld()->GetAuthGameMode());
 	PlayerRef = GameModeBase->GetPlayer();
 	if (!PlayerRef) UE_LOG(LogTemp, Warning, TEXT("Player could not be found"));
 }

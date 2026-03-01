@@ -6,6 +6,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Core/GoPlayerController.h"
+#include "Gameplay/Enemies/GoPawnEnemyGunter.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
@@ -23,6 +24,9 @@ void AGoPawnPlayer::BeginPlay()
 	Super::BeginPlay();
 	TM =  Cast<AGoTileManager>(UGameplayStatics::GetActorOfClass(this, AGoTileManager::StaticClass()));
 	if(!TM) {UE_LOG(LogTemp, Warning, TEXT("GoPlayerPawn : Tile Manager not found")); return;}
+	
+	EnemyManager = Cast<AGoEnemyManager>(UGameplayStatics::GetActorOfClass(this, AGoEnemyManager::StaticClass()));
+	if(!TM) {UE_LOG(LogTemp, Warning, TEXT("GoPlayerPawn : Enemy Manager not found")); return;}
 	
 	TArray<AGoTile*> StarTiles = TM->GetTilesWithType(ETileType::Start);
 	if(StarTiles.Num() == 0 || !IsValid(StarTiles[0])) {UE_LOG(LogTemp, Warning, TEXT("GoPlayerPawn : Start Tile not Found")); return;}
@@ -105,9 +109,20 @@ TArray<AGoTile*> AGoPawnPlayer::GetValidMoveTiles() const
 	return TM->GetWalkableNeighbors(CurrTile->Index);
 }
 
-void AGoPawnPlayer::MoveToTile(AGoTile* Tile)
+void AGoPawnPlayer::MoveToTile_Implementation(AGoTile* Tile)
 {
 	if (!GetValidMoveTiles().Contains(Tile)) return;
+	
+	for (AGoPawnEnemy* Enemy : EnemyManager->Enemies)
+	{
+		AGoPawnEnemyGunter* Gunter = Cast<AGoPawnEnemyGunter>(Enemy);
+		if (Gunter && Gunter->CurrTile == Tile)
+		{
+			return;
+		}
+	}
+	
+	
 	SetActorLocation(Tile->GetActorLocation()+FVector(0,0,100));
 	CurrTile = Tile;
 

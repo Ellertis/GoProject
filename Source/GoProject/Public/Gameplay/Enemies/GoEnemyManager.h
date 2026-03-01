@@ -34,6 +34,11 @@ public:
 	UPROPERTY()
 	AGoTileManager* TileManager;
 
+	UPROPERTY()
+	TMap<int, AGoPawnEnemy*> OccupiedTiles;
+
+	int PlayerTileIndex;
+
 	FNoRemainingEnemyTurns NoRemainingEnemyTurns;
 	
 	FGunterIsDead GunterIsDead;
@@ -55,4 +60,8 @@ public:
 
 	UFUNCTION()
 	void OnNewEnemyTurn(const ETurnPhase NewTurnPhase);
+
+	void UpdateOccupancy();
+
+	bool IsTileOccupied(int TileInd, const AGoPawnEnemy* ExcludeEnemy = nullptr) const;
 };

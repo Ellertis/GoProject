@@ -32,7 +32,7 @@ void AGoPawnEnemy::ApplyMoveIntent_Implementation(const FEnemyMoveIntent& Intent
 	CurrTile = Intent.TargetTile;
 	
 	Direction = Intent.NewDirection;
-	FRotator NewRotation;
+	FRotator NewRotation = FRotator::ZeroRotator;
 	switch (Direction)
 	{
 		case EFaceDirection::Xplus:  NewRotation = FRotator(0, 0, 0); break;

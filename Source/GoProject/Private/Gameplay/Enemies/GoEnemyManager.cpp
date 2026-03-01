@@ -3,6 +3,7 @@
 
 #include "Gameplay/Enemies/GoEnemyManager.h"
 
+#include "Core/GoGameModeBase.h"
 #include "Gameplay/Enemies/GoPawnEnemyGunter.h"
 #include "Gameplay/Enemies/GoPawnEnemySnowmen.h"
 #include "Gameplay/Tile/BoardDataAsset.h"
@@ -119,6 +120,7 @@ void AGoEnemyManager::SpawnEnemy(FTransform Transform, TSubclassOf<AGoPawnEnemy>
 	NewEnemy->TileManager = TileManager;
 	NewEnemy->CurrTile = TileRef;
 	NewEnemy->Direction = Direction;
+	NewEnemy->EnemyManager = this;
 	NewEnemy->OnEnemyDeath.AddDynamic(this,&AGoEnemyManager::RemoveEnemyFromList);
 	Enemies.Add(NewEnemy);
 	
@@ -135,13 +137,16 @@ void AGoEnemyManager::OnNewEnemyTurn(const ETurnPhase NewTurnPhase)
 {
 	if (NewTurnPhase != ETurnPhase::EnemyTurn) return;
 
-	//Pre turn updates
+	//Pre turn updates Gunter player adjacency
 	for(AGoPawnEnemy* Enemy : Enemies) {Enemy->PreTurnUpdate();}
+
+	// Update occupied tiles
+	UpdateOccupancy();
 	
 	//Compute enemies intents
 	TArray<FEnemyMoveIntent> Intents;
 	Intents.Reserve(Enemies.Num());
-	for(const AGoPawnEnemy* Enemy : Enemies) {Intents.Add(Enemy->ComputeMoveIntent());}
+	for(AGoPawnEnemy* Enemy : Enemies) {Intents.Add(Enemy->ComputeMoveIntent());}
 
 	//Apply enemies intents
 	for(int i = 0; i < Enemies.Num(); i++) {Enemies[i]->ApplyMoveIntent(Intents[i]);}
@@ -154,4 +159,35 @@ void AGoEnemyManager::OnNewEnemyTurn(const ETurnPhase NewTurnPhase)
 
 	NoRemainingEnemyTurns.Broadcast();
 	UE_LOG(LogTemp, Warning, TEXT("BROADCASTED NO ENEMY TURNS LEFT"));
+}
+
+void AGoEnemyManager::UpdateOccupancy()
+{
+	OccupiedTiles.Empty();
+	
+	const AGoGameModeBase* GameModeBase = static_cast<AGoGameModeBase*>(GetWorld()->GetAuthGameMode());
+	AGoPawnPlayer* Player = GameModeBase->GetPlayer();
+	if (Player && Player->CurrTile)
+	{
+		PlayerTileIndex = Player->CurrTile->Index;
+	}
+	for (AGoPawnEnemy* Enemy : Enemies)
+	{
+		if (Enemy && Enemy->CurrTile)
+		{
+			OccupiedTiles.Add(Enemy->CurrTile->Index,Enemy);
+		}
+	}
+}
+
+bool AGoEnemyManager::IsTileOccupied(int TileInd, const AGoPawnEnemy* ExcludeEnemy) const
+{
+	// Player tile is always considered occupied
+	if (TileInd == PlayerTileIndex) return true;
+
+	if (const AGoPawnEnemy* const* Occupant = OccupiedTiles.Find(TileInd))
+	{
+		return (*Occupant) != ExcludeEnemy;
+	}
+	return false;
 }

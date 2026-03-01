@@ -8,7 +8,7 @@
 #include "GoPawnEnemy.generated.h"
 
 class AGoTileManager;
-
+class AGoEnemyManager;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnemyDeath, AGoPawnEnemy*,EnemyRef);
 
 USTRUCT(BlueprintType)
@@ -58,6 +58,9 @@ public:
 	
 	UPROPERTY()
 	AGoTileManager* TileManager;
+
+	UPROPERTY()
+	AGoEnemyManager* EnemyManager;
 	
 	FOnEnemyDeath OnEnemyDeath;
 protected:
