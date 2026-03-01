@@ -2,6 +2,7 @@
 	"BuildId": "43139311",
 	"Modules": 
 	{
-		"GoProject": "UnrealEditor-GoProject.dll"
+		"GoProject": "UnrealEditor-GoProject.dll",
+		"GoProjectEditor": "UnrealEditor-GoProjectEditor.dll"
 	}
 }
