@@ -30,6 +30,8 @@ void AGoSnowball::Launch(const FVector& Start, const FVector& End)
 	SetActorLocation(Start);
 	TargetLocation = End;
 	bMoving = true;
+	if (!EnemyManager) return;
+	EnemyManager->RegisterSnowball(this);
 }
 
 // Called when the game starts or when spawned
@@ -50,10 +52,13 @@ void AGoSnowball::OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* Ot
 	}
 	else if (AGoPawnEnemyGunter* Gunter = Cast<AGoPawnEnemyGunter>(OtherActor))
 	{
-		Gunter->ApplyDamage(1);
+		Gunter->ApplyDamage(1, ProjectedDirection);
+		EnemyManager->UnregisterSnowball(this);
+		Destroy();
 	}
-	else if (AGoSnowball* Snowball = Cast<AGoSnowball>(OtherActor))
+	else
 	{
+		EnemyManager->UnregisterSnowball(this);
 		Destroy();
 	}
 }
@@ -73,6 +78,7 @@ void AGoSnowball::Tick(float DeltaTime)
 	{
 		SetActorLocation(TargetLocation);
 		bMoving = false;
+		EnemyManager->UnregisterSnowball(this);
 		Destroy(); // reached target without hitting anything
 	}
 	else

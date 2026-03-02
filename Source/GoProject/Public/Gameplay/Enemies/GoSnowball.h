@@ -5,7 +5,10 @@
 #include "CoreMinimal.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/Actor.h"
+#include "Gameplay/Tile/BoardDataAsset.h"
 #include "GoSnowball.generated.h"
+
+class AGoEnemyManager;
 
 UCLASS()
 class GOPROJECT_API AGoSnowball : public AActor
@@ -17,6 +20,12 @@ public:
 	AGoSnowball();
 	
 	void Launch(const FVector& Start, const FVector& End);
+
+	UPROPERTY()
+	AGoEnemyManager* EnemyManager;
+
+	UPROPERTY()
+	EFaceDirection ProjectedDirection;
 	
 protected:
 	UPROPERTY(VisibleAnywhere)

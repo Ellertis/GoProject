@@ -26,11 +26,20 @@ public:
 	
 	virtual void OnPostMove_Implementation() override;
 
-	virtual void ApplyDamage_Implementation(int Amount) override;
+	virtual void ApplyDamage_Implementation(int Amount, EFaceDirection HitDirection) override;
 
 	void StartFleeing(bool bSetDirection, EFaceDirection AwayDir);
 
 	int CountWalkableTilesInDirection(const FIntPoint& StartCoord, EFaceDirection Dir, int IgnoreTileIndex) const;
+
+	UFUNCTION()
+	bool IsFleeing() const { return bIsFleeing; }
+    
+	UFUNCTION()
+	bool WasHitThisTurn() const { return bWasHitThisTurn; }
+    
+	UFUNCTION()
+	void ClearHitFlag() { bWasHitThisTurn = false; }
 
 protected:
 	virtual void BeginPlay() override;
@@ -38,6 +47,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Pawn|Movement")
 	bool bIsFleeing = false;
 
+	bool bWasHitThisTurn = false;
+	
 	UPROPERTY()
 	AGoPawnPlayer* PlayerRef = nullptr;
 

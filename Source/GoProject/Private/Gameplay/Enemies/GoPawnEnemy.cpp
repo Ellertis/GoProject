@@ -8,7 +8,6 @@
 
 void AGoPawnEnemy::PreTurnUpdate_Implementation()
 {
-	
 }
 
 FEnemyMoveIntent AGoPawnEnemy::ComputeMoveIntent_Implementation() const
@@ -49,7 +48,7 @@ void AGoPawnEnemy::OnPostMove_Implementation()
 	UE_LOG(LogTemp, Error, TEXT("AGoPawnEnemy::OnPostMove_Implementation called directly! Derived class must override this method."));
 }
 
-void AGoPawnEnemy::ApplyDamage_Implementation(int Amount)
+void AGoPawnEnemy::ApplyDamage_Implementation(int Amount, EFaceDirection HitDirection)
 {
 	UE_LOG(LogTemp, Error, TEXT("AGoPawnEnemy::TakeDamage_Implementation called directly! Derived class must override this method."));
 }

@@ -6,6 +6,7 @@
 
 FEnemyMoveIntent AGoPawnEnemySnowmen::ComputeMoveIntent_Implementation() const
 {
+	
 	FEnemyMoveIntent Intent;
 	Intent.TargetTile = CurrTile;
 	Intent.NewDirection = Direction;
@@ -15,23 +16,29 @@ FEnemyMoveIntent AGoPawnEnemySnowmen::ComputeMoveIntent_Implementation() const
 	FIntPoint CurrCoord = TileManager->Get2DIndex(CurrTile->Index);
 	FIntPoint TargetCoord = CurrCoord + GetDirectionDelta(Direction);
 	
-	// if target tile is out of grid, rotate
-	if (!TileManager->IsValidIndex(TargetCoord.X, TargetCoord.Y)){Intent.NewDirection = GetOppositeDirection();return Intent;}
+	//Target tile out of grid
+	if (!TileManager->IsValidIndex(TargetCoord.X, TargetCoord.Y)) {Intent.NewDirection = GetOppositeDirection();return Intent;}
 
 	int TargetIndex = TileManager->Get1DIndex(TargetCoord.X, TargetCoord.Y);
 	AGoTile* TargetTile = TileManager->Tiles[TargetIndex];
-	// if target tile is not walkable or occupied, rotate
-	if (!TargetTile || !TargetTile->Walkable || EnemyManager->IsTileOccupied(TargetIndex,this)){Intent.NewDirection = GetOppositeDirection(); return Intent;}
 	
+	//Target tile not walkable or occupied
+	if (!TargetTile || !TargetTile->Walkable || EnemyManager->IsTileOccupied(TargetIndex, this)) {Intent.NewDirection = GetOppositeDirection();return Intent;}
+	
+	//Set Target tile as it's valid
 	Intent.TargetTile = TargetTile;
+	
+	//Beyond tile out of grid
 	FIntPoint BeyondCoord = TargetCoord + GetDirectionDelta(Direction);
-	// if beyond tile is out of grid rotate when moving to the next tile
-	if (!TileManager->IsValidIndex(BeyondCoord.X, BeyondCoord.Y)){Intent.NewDirection = GetOppositeDirection(); return Intent;}
+	if (!TileManager->IsValidIndex(BeyondCoord.X, BeyondCoord.Y)){Intent.NewDirection = GetOppositeDirection();return Intent;}
 
+	//Beyond tile not walkable
 	int BeyondIndex = TileManager->Get1DIndex(BeyondCoord.X, BeyondCoord.Y);
 	AGoTile* BeyondTile = TileManager->Tiles[BeyondIndex];
-	// if beyond tile is unwalkable rotate when moving to the next tile
-	if (!BeyondTile || !BeyondTile->Walkable)Intent.NewDirection = GetOppositeDirection();
+	if (!BeyondTile || !BeyondTile->Walkable)
+	{
+		Intent.NewDirection = GetOppositeDirection();
+	}
 
 	return Intent;
 }

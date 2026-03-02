@@ -3,7 +3,6 @@
 
 #include "Gameplay/Enemies/GoEnemyManager.h"
 
-#include "Core/GoGameModeBase.h"
 #include "Gameplay/Enemies/GoPawnEnemyGunter.h"
 #include "Gameplay/Enemies/GoPawnEnemySnowmen.h"
 #include "Gameplay/Tile/BoardDataAsset.h"
@@ -32,7 +31,6 @@ void AGoEnemyManager::Tick(float DeltaTime)
 
 void AGoEnemyManager::CheckSnowmanAttacks()
 {
-    // Gather all snowmen
     TArray<AGoPawnEnemySnowmen*> Snowmen;
     for (AGoPawnEnemy* Enemy : Enemies)
     {
@@ -40,8 +38,7 @@ void AGoEnemyManager::CheckSnowmanAttacks()
             Snowmen.Add(Snowman);
     }
     if (Snowmen.Num() < 2) return;
-	UE_LOG(LogTemp, Warning, TEXT("Total snowmen: %d"), Snowmen.Num());
-
+	
     // Group by X (vertical lines) and Y (horizontal lines)
     TMap<int, TArray<AGoPawnEnemySnowmen*>> ByX;
     TMap<int, TArray<AGoPawnEnemySnowmen*>> ByY;
@@ -49,17 +46,14 @@ void AGoEnemyManager::CheckSnowmanAttacks()
     {
         if (!S->CurrTile) continue;
         FIntPoint Pos = TileManager->Get2DIndex(S->CurrTile->Index);
-    	UE_LOG(LogTemp, Warning, TEXT("Snowman at tile %d -> X=%d, Y=%d"), S->CurrTile->Index, Pos.X, Pos.Y);
         ByX.FindOrAdd(Pos.X).Add(S);
         ByY.FindOrAdd(Pos.Y).Add(S);
     }
-	UE_LOG(LogTemp, Warning, TEXT("ByX groups: %d"), ByX.Num());
-	UE_LOG(LogTemp, Warning, TEXT("ByY groups: %d"), ByY.Num());
+	
 	// Vertical alignments (same X)
 	for (const TTuple<int, TArray<AGoPawnEnemySnowmen*>>& Pair : ByX)
 	{
 		const TArray<AGoPawnEnemySnowmen*>& Group = Pair.Value;
-		UE_LOG(LogTemp, Warning, TEXT("Vertical group X=%d has %d snowmen"), Pair.Key, Group.Num());
 		if (Group.Num() < 2) continue;
 		
 		for (int i = 0; i < Group.Num(); i++)
@@ -68,16 +62,18 @@ void AGoEnemyManager::CheckSnowmanAttacks()
 			{
 				AGoPawnEnemySnowmen* S1 = Group[i];
 				AGoPawnEnemySnowmen* S2 = Group[j];
-				UE_LOG(LogTemp, Warning, TEXT("  -> Spawning snowball between snowmen %d and %d"), i, j);
+				
 				FVector Start = S1->GetActorLocation();
 				FVector End = S2->GetActorLocation();
 				
-				
 				AGoSnowball* Snowball = GetWorld()->SpawnActor<AGoSnowball>(SnowballClass, Start, FRotator::ZeroRotator);
+				Snowball->EnemyManager = this;
+				Snowball->ProjectedDirection = EFaceDirection::Xplus; //Can be Xminus but should be irrelevant
 				AGoSnowball* Snowball2 = GetWorld()->SpawnActor<AGoSnowball>(SnowballClass, End, FRotator::ZeroRotator);
+				Snowball2->EnemyManager = this;
+				Snowball->ProjectedDirection = EFaceDirection::Xplus;
 				if (Snowball && Snowball2)
 				{
-					UE_LOG(LogTemp, Warning, TEXT("Snowball"));
 					Snowball->Launch(Start, End);
 					Snowball2->Launch(End, Start);
 				}
@@ -102,10 +98,13 @@ void AGoEnemyManager::CheckSnowmanAttacks()
 				FVector End = S2->GetActorLocation();
 				
 				AGoSnowball* Snowball = GetWorld()->SpawnActor<AGoSnowball>(SnowballClass, Start, FRotator::ZeroRotator);
+				Snowball->EnemyManager = this;
+				Snowball->ProjectedDirection = EFaceDirection::Yplus; //Can be Xminus but should be irrelevant
 				AGoSnowball* Snowball2 = GetWorld()->SpawnActor<AGoSnowball>(SnowballClass, End, FRotator::ZeroRotator);
+				Snowball2->EnemyManager = this;
+				Snowball->ProjectedDirection = EFaceDirection::Yplus;
 				if (Snowball && Snowball2)
 				{
-					UE_LOG(LogTemp, Warning, TEXT("Snowball"));
 					Snowball->Launch(Start, End);
 					Snowball2->Launch(End, Start);
 				}
@@ -123,71 +122,160 @@ void AGoEnemyManager::SpawnEnemy(FTransform Transform, TSubclassOf<AGoPawnEnemy>
 	NewEnemy->EnemyManager = this;
 	NewEnemy->OnEnemyDeath.AddDynamic(this,&AGoEnemyManager::RemoveEnemyFromList);
 	Enemies.Add(NewEnemy);
-	
 }
 
 void AGoEnemyManager::RemoveEnemyFromList(AGoPawnEnemy* EnemyRef)
 {
 	if(!Enemies.Contains(EnemyRef)) return;
 	Enemies.Remove(EnemyRef);
-	if(EnemyRef->StaticClass() == AGoPawnEnemyGunter::StaticClass()) GunterIsDead.Broadcast(); // If Gunter dies, game over
+	if(EnemyRef->IsA(AGoPawnEnemyGunter::StaticClass())) GunterIsDead.Broadcast(); // If Gunter dies, game over
 }
 
 void AGoEnemyManager::OnNewEnemyTurn(const ETurnPhase NewTurnPhase)
 {
 	if (NewTurnPhase != ETurnPhase::EnemyTurn) return;
 
-	//Pre turn updates Gunter player adjacency
-	for(AGoPawnEnemy* Enemy : Enemies) {Enemy->PreTurnUpdate();}
+	bGunterNeedsMove = false;
+	bWaitingToEndTurn = false;
+	
+	TArray<AGoPawnEnemySnowmen*> Snowmen;
+	AGoPawnEnemyGunter* Gunter = nullptr;
 
-	// Update occupied tiles
+	for (AGoPawnEnemy* Enemy : Enemies)
+	{
+		if (AGoPawnEnemySnowmen* Snowman = Cast<AGoPawnEnemySnowmen>(Enemy))
+		{
+			Snowmen.Add(Snowman);
+		}
+		else if (AGoPawnEnemyGunter* G = Cast<AGoPawnEnemyGunter>(Enemy))
+		{
+			Gunter = G;
+		}
+	}
+	
+	//Pre-turn updates for all enemies (player adjacency check for Gunter)
+	for (AGoPawnEnemy* Enemy : Enemies) {Enemy->PreTurnUpdate();}
+
+	//Set Player and Enemies occupied tiles
 	UpdateOccupancy();
 	
-	//Compute enemies intents
-	TArray<FEnemyMoveIntent> Intents;
-	Intents.Reserve(Enemies.Num());
-	for(AGoPawnEnemy* Enemy : Enemies) {Intents.Add(Enemy->ComputeMoveIntent());}
+	//Gunter ComputeMove | ApplyMoveIntent
+	if (Gunter)
+	{
+		FEnemyMoveIntent GunterIntent = Gunter->ComputeMoveIntent();
+		Gunter->ApplyMoveIntent(GunterIntent);
+	}
+	
+	UpdateOccupancy();
+	
+	//Snowmen ComputeMove | ApplyMoveIntent
+	for (AGoPawnEnemySnowmen* Snowman : Snowmen)
+	{
+		FEnemyMoveIntent SnowmanIntent = Snowman->ComputeMoveIntent();
+		Snowman->ApplyMoveIntent(SnowmanIntent);
+	}
 
-	//Apply enemies intents
-	for(int i = 0; i < Enemies.Num(); i++) {Enemies[i]->ApplyMoveIntent(Intents[i]);}
-
-	//Post Move updates
-	for(AGoPawnEnemy* Enemy : Enemies) {Enemy->OnPostMove();}
-
-	//Check snowmen alignments
+	//Check snowman attacks
 	CheckSnowmanAttacks();
 
-	NoRemainingEnemyTurns.Broadcast();
-	UE_LOG(LogTemp, Warning, TEXT("BROADCASTED NO ENEMY TURNS LEFT"));
+	//Check if Gunter was hit with snowballs
+	if (Gunter && Gunter->WasHitThisTurn())
+	{
+		Gunter->ClearHitFlag();
+		FEnemyMoveIntent GunterIntent = Gunter->ComputeMoveIntent();
+		Gunter->ApplyMoveIntent(GunterIntent);
+		UpdateOccupancy();
+	}
+	
+	for (AGoPawnEnemy* Enemy : Enemies) 
+	{
+		Enemy->OnPostMove();
+	}
+	
+	TryEndTurn();
 }
 
 void AGoEnemyManager::UpdateOccupancy()
 {
 	OccupiedTiles.Empty();
 	
-	const AGoGameModeBase* GameModeBase = static_cast<AGoGameModeBase*>(GetWorld()->GetAuthGameMode());
-	AGoPawnPlayer* Player = GameModeBase->GetPlayer();
-	if (Player && Player->CurrTile)
-	{
-		PlayerTileIndex = Player->CurrTile->Index;
-	}
+	if (PlayerRef && PlayerRef->CurrTile) {PlayerTileIndex = PlayerRef->CurrTile->Index;}
+	else{PlayerTileIndex = -1;}
+    
+	// Add all enemies
 	for (AGoPawnEnemy* Enemy : Enemies)
 	{
 		if (Enemy && Enemy->CurrTile)
 		{
-			OccupiedTiles.Add(Enemy->CurrTile->Index,Enemy);
+			OccupiedTiles.Add(Enemy->CurrTile->Index, Enemy);
 		}
 	}
 }
 
-bool AGoEnemyManager::IsTileOccupied(int TileInd, const AGoPawnEnemy* ExcludeEnemy) const
+bool AGoEnemyManager::IsTileOccupied(int TileIndex, const AGoPawnEnemy* ExcludeEnemy) const
 {
-	// Player tile is always considered occupied
-	if (TileInd == PlayerTileIndex) return true;
-
-	if (const AGoPawnEnemy* const* Occupant = OccupiedTiles.Find(TileInd))
+	if (TileIndex == PlayerTileIndex) return true;
+	
+	if (const AGoPawnEnemy* const* Occupant = OccupiedTiles.Find(TileIndex))
 	{
 		return (*Occupant) != ExcludeEnemy;
 	}
 	return false;
+}
+
+void AGoEnemyManager::RegisterSnowball(AGoSnowball* Snowball)
+{
+	if (Snowball){ActiveSnowballs.Add(Snowball);}
+}
+
+void AGoEnemyManager::UnregisterSnowball(AGoSnowball* Snowball)
+{
+	if (Snowball){ActiveSnowballs.Remove(Snowball);}
+	if (bGunterNeedsMove){ProcessGunterReaction();}
+	if (bWaitingToEndTurn && ActiveSnowballs.Num() == 0)
+	{
+		EndTurn();
+	}
+}
+
+void AGoEnemyManager::EndTurn()
+{
+	bWaitingToEndTurn = false;
+	NoRemainingEnemyTurns.Broadcast();
+}
+
+void AGoEnemyManager::TryEndTurn()
+{
+	if (ActiveSnowballs.Num() == 0)
+	{
+		EndTurn();
+	}
+	else
+	{
+		bWaitingToEndTurn = true;
+	}
+}
+
+void AGoEnemyManager::ProcessGunterReaction()
+{
+	if (!bGunterNeedsMove) return;
+	
+	AGoPawnEnemyGunter* Gunter = nullptr;
+	for (AGoPawnEnemy* Enemy : Enemies)
+	{
+		if (AGoPawnEnemyGunter* G = Cast<AGoPawnEnemyGunter>(Enemy))
+		{
+			Gunter = G;
+			break;
+		}
+	}
+    
+	if (Gunter && Gunter->IsFleeing())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Processing Gunter reaction move"));
+		FEnemyMoveIntent GunterIntent = Gunter->ComputeMoveIntent();
+		Gunter->ApplyMoveIntent(GunterIntent);
+		UpdateOccupancy();
+		bGunterNeedsMove = false;
+	}
 }

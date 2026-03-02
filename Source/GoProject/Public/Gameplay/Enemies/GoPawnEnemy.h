@@ -15,10 +15,9 @@ USTRUCT(BlueprintType)
 struct FEnemyMoveIntent
 {
 	GENERATED_BODY()
-
+	
 	UPROPERTY()
 	AGoTile* TargetTile = nullptr;
-
 	UPROPERTY()
 	EFaceDirection NewDirection = EFaceDirection::Xplus;
 };
@@ -50,11 +49,18 @@ public:
 	EFaceDirection Direction;
 	
 	UFUNCTION(BlueprintNativeEvent, Category="Enemy|Health")
-	void ApplyDamage(int Amount);
-	virtual void ApplyDamage_Implementation(int Amount);
-
+	void ApplyDamage(int Amount, EFaceDirection HitDirection);
+	virtual void ApplyDamage_Implementation(int Amount, EFaceDirection HitDirection);
+	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Enemy|Health")
 	int Health;
+
+	//HELPERS
+	FIntPoint GetDirectionDelta(const EFaceDirection DirectionValue) const;
+
+	EFaceDirection GetDirectionFromDelta(FIntPoint& Delta) const;
+
+	EFaceDirection GetOppositeDirection() const;
 	
 	UPROPERTY()
 	AGoTileManager* TileManager;
@@ -63,10 +69,4 @@ public:
 	AGoEnemyManager* EnemyManager;
 	
 	FOnEnemyDeath OnEnemyDeath;
-protected:
-	FIntPoint GetDirectionDelta(const EFaceDirection DirectionValue) const;
-
-	EFaceDirection GetDirectionFromDelta(FIntPoint& Delta) const;
-
-	EFaceDirection GetOppositeDirection() const;
 };

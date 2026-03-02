@@ -10,6 +10,7 @@
 #include "Gameplay/Tile/BoardDataAsset.h"
 #include "GoEnemyManager.generated.h"
 
+class AGoPawnPlayer;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FNoRemainingEnemyTurns);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGunterIsDead);
 
@@ -35,9 +36,7 @@ public:
 	AGoTileManager* TileManager;
 
 	UPROPERTY()
-	TMap<int, AGoPawnEnemy*> OccupiedTiles;
-
-	int PlayerTileIndex;
+	AGoPawnPlayer* PlayerRef = nullptr;
 
 	FNoRemainingEnemyTurns NoRemainingEnemyTurns;
 	
@@ -48,6 +47,23 @@ protected:
 	virtual void BeginPlay() override;
 
 	void CheckSnowmanAttacks();
+	
+	UPROPERTY()
+	TMap<int, AGoPawnEnemy*> OccupiedTiles;
+
+	UPROPERTY()
+	int PlayerTileIndex = -1;
+
+	UPROPERTY()
+	TArray<AGoSnowball*> ActiveSnowballs;
+
+	bool bWaitingToEndTurn = false;
+
+	bool bGunterNeedsMove = false;
+	
+	void TryEndTurn();
+
+	void ProcessGunterReaction();
 
 public:	
 	// Called every frame
@@ -61,7 +77,18 @@ public:
 	UFUNCTION()
 	void OnNewEnemyTurn(const ETurnPhase NewTurnPhase);
 
+	UFUNCTION()
 	void UpdateOccupancy();
+	
+	UFUNCTION()
+	bool IsTileOccupied(int TileIndex, const AGoPawnEnemy* ExcludeEnemy = nullptr) const;
 
-	bool IsTileOccupied(int TileInd, const AGoPawnEnemy* ExcludeEnemy = nullptr) const;
+	UFUNCTION()
+	void RegisterSnowball(AGoSnowball* Snowball);
+
+	UFUNCTION()
+	void UnregisterSnowball(AGoSnowball* Snowball);
+
+	UFUNCTION()
+	void EndTurn();
 };
