@@ -4,10 +4,11 @@
 #include "Gameplay/Enemies/GoEnemyManager.h"
 #include "Gameplay/Tile/GoTileManager.h"
 
-FEnemyMoveIntent AGoPawnEnemySnowmen::ComputeMoveIntent_Implementation() const
+FMoveIntent AGoPawnEnemySnowmen::ComputeMoveIntent_Implementation() const
 {
-	
-	FEnemyMoveIntent Intent;
+	// Snowman movement logic is relatively simple, advance to the next tile in the face direction if it's possible.
+	// if snowman advances, check the tile after to see if it's walkable, if not rotate 180 degrees.
+	FMoveIntent Intent;
 	Intent.TargetTile = CurrTile;
 	Intent.NewDirection = Direction;
 
@@ -15,40 +16,45 @@ FEnemyMoveIntent AGoPawnEnemySnowmen::ComputeMoveIntent_Implementation() const
 
 	FIntPoint CurrCoord = TileManager->Get2DIndex(CurrTile->Index);
 	FIntPoint TargetCoord = CurrCoord + GetDirectionDelta(Direction);
-	
-	//Target tile out of grid
-	if (!TileManager->IsValidIndex(TargetCoord.X, TargetCoord.Y)) {Intent.NewDirection = GetOppositeDirection();return Intent;}
+    
+	if (!TileManager->IsValidIndex(TargetCoord.X, TargetCoord.Y)) 
+	{
+		Intent.NewDirection = GetOppositeDirection(Direction);
+		return Intent;
+	}
 
 	int TargetIndex = TileManager->Get1DIndex(TargetCoord.X, TargetCoord.Y);
 	AGoTile* TargetTile = TileManager->Tiles[TargetIndex];
-	
-	//Target tile not walkable or occupied
-	if (!TargetTile || !TargetTile->Walkable || EnemyManager->IsTileOccupied(TargetIndex, this)) {Intent.NewDirection = GetOppositeDirection();return Intent;}
-	
-	//Set Target tile as it's valid
+	if (!TargetTile || !TargetTile->Walkable || EnemyManager->IsTileOccupied(TargetIndex, this)) 
+	{
+		Intent.NewDirection = GetOppositeDirection(Direction);
+		return Intent;
+	}
+    
 	Intent.TargetTile = TargetTile;
-	
-	//Beyond tile out of grid
+    
 	FIntPoint BeyondCoord = TargetCoord + GetDirectionDelta(Direction);
-	if (!TileManager->IsValidIndex(BeyondCoord.X, BeyondCoord.Y)){Intent.NewDirection = GetOppositeDirection();return Intent;}
+	if (!TileManager->IsValidIndex(BeyondCoord.X, BeyondCoord.Y))
+	{
+		Intent.NewDirection = GetOppositeDirection(Direction);
+		return Intent;
+	}
 
-	//Beyond tile not walkable
 	int BeyondIndex = TileManager->Get1DIndex(BeyondCoord.X, BeyondCoord.Y);
 	AGoTile* BeyondTile = TileManager->Tiles[BeyondIndex];
-	if (!BeyondTile || !BeyondTile->Walkable)
+	if (!BeyondTile || !BeyondTile->Walkable || EnemyManager->IsTileOccupied(BeyondIndex, this))
 	{
-		Intent.NewDirection = GetOppositeDirection();
+		Intent.NewDirection = GetOppositeDirection(Direction);
 	}
 
 	return Intent;
 }
 
-void AGoPawnEnemySnowmen::ApplyMoveIntent_Implementation(const FEnemyMoveIntent& Intent)
+void AGoPawnEnemySnowmen::ApplyMoveIntent_Implementation(const FMoveIntent& Intent)
 {
 	Super::ApplyMoveIntent_Implementation(Intent);
 }
 
 void AGoPawnEnemySnowmen::OnPostMove_Implementation()
 {
-	
 }

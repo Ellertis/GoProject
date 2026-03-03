@@ -1,146 +1,415 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "Player/GoPawnPlayer.h"
-
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Core/GoPlayerController.h"
-#include "Gameplay/Enemies/GoPawnEnemyGunter.h"
+#include "Core/GoGameModeBase.h"
+#include "Gameplay/Enemies/GoPawnEnemySnowmen.h"
+#include "Gameplay/Tile/GoTile.h"
 #include "Kismet/GameplayStatics.h"
 
-// Sets default values
 AGoPawnPlayer::AGoPawnPlayer()
 {
- 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
-	
-	MeshComponent->SetCollisionResponseToChannel(ECC_Click,ECR_Block);
+    MeshComponent->SetCollisionResponseToChannel(ECC_Click, ECR_Block);
+    HeightOffset = 100.0f;
 }
 
-// Called when the game starts or when spawned
 void AGoPawnPlayer::BeginPlay()
 {
-	Super::BeginPlay();
-	TM =  Cast<AGoTileManager>(UGameplayStatics::GetActorOfClass(this, AGoTileManager::StaticClass()));
-	if(!TM) {UE_LOG(LogTemp, Warning, TEXT("GoPlayerPawn : Tile Manager not found")); return;}
-	
-	EnemyManager = Cast<AGoEnemyManager>(UGameplayStatics::GetActorOfClass(this, AGoEnemyManager::StaticClass()));
-	if(!TM) {UE_LOG(LogTemp, Warning, TEXT("GoPlayerPawn : Enemy Manager not found")); return;}
-	
-	TArray<AGoTile*> StarTiles = TM->GetTilesWithType(ETileType::Start);
-	if(StarTiles.Num() == 0 || !IsValid(StarTiles[0])) {UE_LOG(LogTemp, Warning, TEXT("GoPlayerPawn : Start Tile not Found")); return;}
-	
-	PlacePlayer(StarTiles[0]);
+    Super::BeginPlay();
+    
+    TileManager = Cast<AGoTileManager>(UGameplayStatics::GetActorOfClass(this, AGoTileManager::StaticClass()));
+    if(!TileManager) 
+    { 
+        UE_LOG(LogTemp, Warning, TEXT("GoPlayerPawn: Tile Manager not found")); 
+        return;
+    }
+    
+    EnemyManager = Cast<AGoEnemyManager>(UGameplayStatics::GetActorOfClass(this, AGoEnemyManager::StaticClass()));
+    if(!EnemyManager) 
+    { 
+        UE_LOG(LogTemp, Warning, TEXT("GoPlayerPawn: Enemy Manager not found")); 
+        return;
+    }
+    
+    TurnManager = Cast<AGoTurnManager>(UGameplayStatics::GetActorOfClass(this, AGoTurnManager::StaticClass()));
+    if(!TurnManager) 
+    { 
+        UE_LOG(LogTemp, Warning, TEXT("GoPlayerPawn: Turn Manager not found")); 
+        return;
+    }
+    
+    TArray<AGoTile*> StartTiles = TileManager->GetTilesWithType(ETileType::Start);
+    if(StartTiles.Num() == 0 || !IsValid(StartTiles[0])) 
+    { 
+        UE_LOG(LogTemp, Warning, TEXT("GoPlayerPawn: Start Tile not Found")); 
+        return;
+    }
+    
+    PlacePlayer(StartTiles[0]);
 }
 
-// Called every frame
-void AGoPawnPlayer::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-	
 void AGoPawnPlayer::PossessedBy(AController* NewController)
 {
-	Super::PossessedBy(NewController);
-	PlayerController = Cast<AGoPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
-	if (!PlayerController) return;
-	if (UEnhancedInputLocalPlayerSubsystem* Subsystem=
-		ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		{
-			Subsystem->AddMappingContext(DefaultMappingContext,0);
-		}
+    Super::PossessedBy(NewController);
+    PlayerController = Cast<AGoPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
+    if (!PlayerController) return;
+    
+    if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+        ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+    {
+        Subsystem->AddMappingContext(DefaultMappingContext, 0);
+    }
 }
 
-// Called to bind functionality to input
 void AGoPawnPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
-	{
-		EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Started, this, &AGoPawnPlayer::OnClickTrigger);
-		EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Completed, this,  &AGoPawnPlayer::OnClickReleased);
-		//EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Triggered, this, &AGoCameraPawn::OnClickTrigger);
-	}
+    Super::SetupPlayerInputComponent(PlayerInputComponent);
+    
+    if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
+    {
+        EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Started, this, &AGoPawnPlayer::OnClickTrigger);
+        EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Completed, this, &AGoPawnPlayer::OnClickReleased);
+    	EnhancedInputComponent->BindAction(JakePlacementAction, ETriggerEvent::Triggered, this, &AGoPawnPlayer::OnJakePlacementTriggered);
+    }
 }
 
 void AGoPawnPlayer::PlacePlayer(AGoTile* Tile)
 {
-	CurrTile = Tile;
-	FVector StartLocation = CurrTile->GetActorLocation();
-	StartLocation = StartLocation + FVector(0, 0, 100);
-	SetActorLocation(StartLocation);
-	
+    if (!Tile) return;
+    OnMoveToTile(Tile);
 }
 
 void AGoPawnPlayer::OnClickTrigger()
 {
-	if(TurnManager->CurrentTurnPhase != ETurnPhase::PlayerTurn) return;
-	UE_LOG(LogTemp, Warning, TEXT("OnClickTrigger"));
-	//if(!bCanClickTile) return; TODO
-	FHitResult HitResult;
-	PlayerController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Click), true, HitResult);
-	if (this == Cast<AGoPawnPlayer>(HitResult.GetActor()))
-	{
-		SelectedActor = this;
-		ToggleHighlightNeighbors(true);
-	}
-	UE_LOG(LogTemp, Warning, TEXT("ReadyToMove"));
+    if (TurnManager->CurrentTurnPhase != ETurnPhase::PlayerTurn) return;
+	
+    if (bIsJakePlacementMode) return;
+    
+    FHitResult HitResult;
+    PlayerController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Click), true, HitResult);
+    
+    if (this == HitResult.GetActor())
+    {
+        SelectedActor = this;
+        ToggleHighlightNeighbors(true);
+    }
 }
 
 void AGoPawnPlayer::OnClickReleased()
 {
-	if(TurnManager->CurrentTurnPhase != ETurnPhase::PlayerTurn) return;
-	UE_LOG(LogTemp, Warning, TEXT("OnClickReleased"));
-	FHitResult HitResult;
-	PlayerController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Click), true,HitResult);
-	AGoTile* HitTile = Cast<AGoTile>(HitResult.GetActor());
-	if (!IsValid(HitTile)) return;
-	UE_LOG(LogTemp, Warning, TEXT("Clicked Tile"));
+    if (TurnManager->CurrentTurnPhase != ETurnPhase::PlayerTurn) return;
+    
+    FHitResult HitResult;
+    PlayerController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Click), true, HitResult);
+    
+    AGoTile* HitTile = Cast<AGoTile>(HitResult.GetActor());
+    if (!IsValid(HitTile)) return;
 	
-	if (!IsValid(CurrTile)) return;
-	ToggleHighlightNeighbors(false);
-	MoveToTile(HitTile);
+    if (bIsJakePlacementMode) {TryPlaceJakeTile(HitTile);return;}
+	
+    if (!IsValid(CurrTile)) return;
+    
+    ToggleHighlightNeighbors(false);
+    MoveToTile(HitTile);
+}
+
+void AGoPawnPlayer::OnJakePlacementTriggered()
+{
+    if (TurnManager->CurrentTurnPhase != ETurnPhase::PlayerTurn) return;
+    
+    ToggleJakePlacementMode();
 }
 
 TArray<AGoTile*> AGoPawnPlayer::GetValidMoveTiles() const
 {
-	return TM->GetWalkableNeighbors(CurrTile->Index);
+    if (!TileManager || !CurrTile) return TArray<AGoTile*>();
+	
+    TArray<AGoTile*> ValidTiles = TileManager->GetWalkableNeighbors(CurrTile->Index);
+	
+    ValidTiles.RemoveAll([this](AGoTile* Tile)
+    {
+        if (!Tile) return true;
+        return EnemyManager->IsTileOccupied(Tile->Index, nullptr);
+    });
+    
+    return ValidTiles;
 }
 
-void AGoPawnPlayer::MoveToTile_Implementation(AGoTile* Tile)
+void AGoPawnPlayer::MoveToTile(AGoTile* Tile)
 {
-	if (!GetValidMoveTiles().Contains(Tile)) return;
+    if (!GetValidMoveTiles().Contains(Tile))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Player move failed: Not a valid move tile"));
+        return;
+    }
 	
-	for (AGoPawnEnemy* Enemy : EnemyManager->Enemies)
-	{
-		AGoPawnEnemyGunter* Gunter = Cast<AGoPawnEnemyGunter>(Enemy);
-		if (Gunter && Gunter->CurrTile == Tile)
-		{
-			return;
-		}
-	}
+    OnMoveStart();
 	
+    if (Tile->TileType == ETileType::Sandwich)
+    {
+        CollectSandwich();
+        Tile->TileType = ETileType::Normal;
+        Tile->UpdateDebugColors();
+    }
 	
-	SetActorLocation(Tile->GetActorLocation()+FVector(0,0,100));
-	CurrTile = Tile;
+    if (CurrTile == CurrentJakeTile)
+    {
+        OnJakeTileExited();
+    }
 
-	//await player arrive to tile
-	FinishTurn();
+    OnMoveToTile(Tile);
+    OnMoveEnd();
+    FinishTurn();
 }
 
 void AGoPawnPlayer::ToggleHighlightNeighbors(bool value) const
 {
-	TArray<AGoTile*> Tiles = GetValidMoveTiles();
-	for (AGoTile* Tile : Tiles)
-	{
-		Tile->HighLightTile(value);
-	}
+    TArray<AGoTile*> Tiles = GetValidMoveTiles();
+    for (AGoTile* Tile : Tiles)
+    {
+        Tile->HighLightTile(value);
+    }
 }
 
 void AGoPawnPlayer::FinishTurn() const
 {
-	OnPlayerMovement.Broadcast();
-	UE_LOG(LogTemp,Warning,TEXT("Called OnPlayerMovement.Broadcast"));
+    OnPlayerMovement.Broadcast();
+}
+
+void AGoPawnPlayer::CollectSandwich()
+{
+    AGoGameModeBase* GameMode = Cast<AGoGameModeBase>(GetWorld()->GetAuthGameMode());
+    if (GameMode)
+    {
+        GameMode->AddSandwich(1);
+        OnCollectSandwich();
+    }
+}
+
+void AGoPawnPlayer::OnCollectSandwich_Implementation()
+{
+}
+
+void AGoPawnPlayer::ToggleJakePlacementMode()
+{
+    if (bIsJakePlacementMode)
+    {
+        ExitJakePlacementMode();
+    }
+    else
+    {
+        EnterJakePlacementMode();
+    }
+}
+
+void AGoPawnPlayer::EnterJakePlacementMode()
+{
+    AGoGameModeBase* GameMode = Cast<AGoGameModeBase>(GetWorld()->GetAuthGameMode());
+    if (!GameMode || GameMode->GetSandwichCount() <= 0)
+    {
+        UE_LOG(LogTemp, Display, TEXT("Cannot enter Jake placement mode: No sandwiches available"));
+        return;
+    }
+
+    if (TurnManager->CurrentTurnPhase != ETurnPhase::PlayerTurn)
+    {
+        UE_LOG(LogTemp, Display, TEXT("Cannot enter Jake placement mode: Not player turn"));
+        return;
+    }
+
+	// If in movement mode
+    if (SelectedActor == this)
+    {
+        ToggleHighlightNeighbors(false);
+        SelectedActor = nullptr;
+    }
+
+    bIsJakePlacementMode = true;
+    UpdateJakePlacementHighlights();
+    OnEnterJakePlacementMode();
+    
+    UE_LOG(LogTemp, Display, TEXT("Entered Jake placement mode"));
+}
+
+void AGoPawnPlayer::ExitJakePlacementMode()
+{
+    if (bIsJakePlacementMode)
+    {
+        bIsJakePlacementMode = false;
+        ClearJakePlacementHighlights();
+        OnExitJakePlacementMode();
+        
+        UE_LOG(LogTemp, Display, TEXT("Exited Jake placement mode"));
+    }
+}
+
+void AGoPawnPlayer::OnEnterJakePlacementMode_Implementation()
+{
+}
+
+void AGoPawnPlayer::OnExitJakePlacementMode_Implementation()
+{
+}
+
+void AGoPawnPlayer::UpdateJakePlacementHighlights()
+{
+    ClearJakePlacementHighlights();
+    HighlightedJakeTiles = GetValidJakePlacementTiles();
+    
+    for (AGoTile* Tile : HighlightedJakeTiles)
+    {
+    	Tile->HighLightTile(true); 
+    }
+}
+
+void AGoPawnPlayer::ClearJakePlacementHighlights()
+{
+    for (AGoTile* Tile : HighlightedJakeTiles)
+    {
+    	Tile->HighLightTile(false);
+    }
+    HighlightedJakeTiles.Empty();
+}
+
+TArray<AGoTile*> AGoPawnPlayer::GetValidJakePlacementTiles() const
+{
+    TArray<AGoTile*> ValidTiles;
+    
+    if (!TileManager || !CurrTile) return ValidTiles;
+    
+    // Collect all tiles around where Jake can be placed
+    TArray<AGoTile*> VoidTiles = TileManager->GetTilesWithType(ETileType::Void);
+    
+    FIntPoint PlayerPos = TileManager->Get2DIndex(CurrTile->Index);
+    
+    for (AGoTile* VoidTile : VoidTiles)
+    {
+        if (!IsValid(VoidTile)) continue;
+        
+        FIntPoint VoidPos = TileManager->Get2DIndex(VoidTile->Index);
+        int Distance = FMath::Abs(PlayerPos.X - VoidPos.X) + FMath::Abs(PlayerPos.Y - VoidPos.Y);
+        
+        // Must be adjacent and connected
+        if (Distance == 1 && TileManager->AreConnected(CurrTile->Index, VoidTile->Index))
+        {
+            ValidTiles.Add(VoidTile);
+        }
+    }
+    
+    return ValidTiles;
+}
+
+bool AGoPawnPlayer::TryPlaceJakeTile(AGoTile* TargetVoidTile)
+{
+    if (!bIsJakePlacementMode)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Cannot place Jake tile: Not in placement mode"));
+        return false;
+    }
+
+    AGoGameModeBase* GameMode = Cast<AGoGameModeBase>(GetWorld()->GetAuthGameMode());
+    if (!GameMode)
+    {
+        UE_LOG(LogTemp, Error, TEXT("Cannot place Jake tile: GameMode not found"));
+        ExitJakePlacementMode();
+        return false;
+    }
+	
+    if (!TargetVoidTile || !IsValid(TargetVoidTile) || TargetVoidTile->TileType != ETileType::Void)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Cannot place Jake tile: Invalid target tile"));
+        return false;
+    }
+	
+    TArray<AGoTile*> ValidTiles = GetValidJakePlacementTiles();
+    if (!ValidTiles.Contains(TargetVoidTile)) 
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Cannot place Jake tile: Target not adjacent or not connected"));
+        return false;
+    }
+	
+    if (!GameMode->UseSandwich())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Cannot place Jake tile: Failed to consume sandwich"));
+        ExitJakePlacementMode();
+        return false;
+    }
+	
+    OriginalVoidTile = TargetVoidTile;
+	
+    FIntPoint GridPos = TileManager->Get2DIndex(TargetVoidTile->Index);
+    FVector TileManagerLocation = TileManager->GetActorLocation();
+	
+    FVector SpawnLocation = TileManagerLocation + FVector(
+        GridPos.X * TileManager->Displacement,
+        GridPos.Y * TileManager->Displacement,
+        0.0f
+    );
+	
+    CurrentJakeTile = GetWorld()->SpawnActor<AGoTile>(
+        JakeTileClass,
+        SpawnLocation,
+        FRotator::ZeroRotator
+    );
+    
+    if (CurrentJakeTile)
+    {
+        CurrentJakeTile->TileType = ETileType::Jake;
+        CurrentJakeTile->Walkable = true;
+        CurrentJakeTile->Connections = TargetVoidTile->Connections;
+        CurrentJakeTile->Neighbors = TargetVoidTile->Neighbors;
+        CurrentJakeTile->Index = TargetVoidTile->Index;
+        CurrentJakeTile->UpdateDebugColors();
+    	
+        TargetVoidTile->SetActorHiddenInGame(true);
+        TargetVoidTile->SetActorEnableCollision(false);
+    	
+        TileManager->Tiles[TargetVoidTile->Index] = CurrentJakeTile;
+        TileManager->VisualizeConnections();
+    	
+        OnPlaceJakeTile();
+        ExitJakePlacementMode();
+        FinishTurn();
+        
+        return true;
+    }
+	
+    UE_LOG(LogTemp, Error, TEXT("Failed to spawn Jake tile - refunding sandwich"));
+    GameMode->AddSandwich(1); // Refund the sandwich
+    ExitJakePlacementMode();
+    return false;
+}
+
+void AGoPawnPlayer::OnPlaceJakeTile_Implementation()
+{
+}
+
+void AGoPawnPlayer::RemoveJakeTile()
+{
+    if (!CurrentJakeTile || !OriginalVoidTile) return;
+	
+    OriginalVoidTile->SetActorHiddenInGame(false);
+    OriginalVoidTile->SetActorEnableCollision(true);
+    int Index = CurrentJakeTile->Index;
+    TileManager->Tiles[Index] = OriginalVoidTile;
+	CurrentJakeTile->Destroy();
+    CurrentJakeTile = nullptr;
+    TileManager->VisualizeConnections();
+	
+    OnRemoveJakeTile();
+    UE_LOG(LogTemp, Display, TEXT("Jake tile removed"));
+}
+
+void AGoPawnPlayer::OnRemoveJakeTile_Implementation()
+{
+}
+
+void AGoPawnPlayer::OnJakeTileExited()
+{
+    if (CurrentJakeTile)
+    {
+        RemoveJakeTile();
+    }
 }

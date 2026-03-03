@@ -6,14 +6,17 @@
 #include "GameFramework/Actor.h"
 #include "GoTile.generated.h"
 #define ECC_Click ECollisionChannel::ECC_GameTraceChannel1
+
 UENUM(BlueprintType)
 enum class ETileType : uint8
 {
-	Option1 UMETA(DisplayName = "Option1"),
-	Option2 UMETA(DisplayName = "Option2"),
 	Empty UMETA(DisplayName = "Empty"),
 	Start UMETA(DisplayName = "Start"),
-	End UMETA(DisplayName = "End")
+	End UMETA(DisplayName = "End"),
+	Normal UMETA(DisplayName = "Normal"),
+	Void UMETA(DisplayName = "Void"),
+	Sandwich UMETA(DisplayName = "Sandwich"),
+	Jake UMETA(DisplayName = "Jake")
 };
 
 UENUM(BlueprintType, meta=(Bitflags, UseEnumValuesAsMaskValuesInEditor="true"))

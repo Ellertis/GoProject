@@ -4,69 +4,50 @@
 
 #include "CoreMinimal.h"
 #include "Core/GoPawn.h"
-#include "Gameplay/Tile/BoardDataAsset.h"
 #include "GoPawnEnemy.generated.h"
 
-class AGoTileManager;
 class AGoEnemyManager;
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnemyDeath, AGoPawnEnemy*,EnemyRef);
 
-USTRUCT(BlueprintType)
-struct FEnemyMoveIntent
-{
-	GENERATED_BODY()
-	
-	UPROPERTY()
-	AGoTile* TargetTile = nullptr;
-	UPROPERTY()
-	EFaceDirection NewDirection = EFaceDirection::Xplus;
-};
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEnemyDeath, AGoPawnEnemy*, EnemyRef);
 
-UCLASS(Abstract)
+UCLASS(Blueprintable)
 class GOPROJECT_API AGoPawnEnemy : public AGoPawn
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
+    AGoPawnEnemy();
 
-	UFUNCTION(BlueprintNativeEvent, Category="Enemy|Movement")
-	void PreTurnUpdate();
-	virtual void PreTurnUpdate_Implementation();
+    UPROPERTY(BlueprintAssignable, Category = "Events")
+    FOnEnemyDeath OnEnemyDeath;
 	
-	UFUNCTION(BlueprintNativeEvent, Category="Enemy|Movement")
-	FEnemyMoveIntent ComputeMoveIntent() const;
-	virtual FEnemyMoveIntent ComputeMoveIntent_Implementation() const;
+    UFUNCTION(BlueprintNativeEvent, Category = "AI")
+    void PreTurnUpdate();
+    virtual void PreTurnUpdate_Implementation();
 
-	UFUNCTION(BlueprintNativeEvent, Category = "Enemy|Movement")
-	void ApplyMoveIntent(const FEnemyMoveIntent& Intent);
-	virtual void ApplyMoveIntent_Implementation(const FEnemyMoveIntent& Intent);
+    UFUNCTION(BlueprintNativeEvent, Category = "AI")
+    FMoveIntent ComputeMoveIntent() const;
+    virtual FMoveIntent ComputeMoveIntent_Implementation() const;
 
-	UFUNCTION(BlueprintNativeEvent, Category = "Enemy|Movement")
-	void OnPostMove();
-	virtual void OnPostMove_Implementation();
+    UFUNCTION(BlueprintNativeEvent, Category = "AI")
+    void ApplyMoveIntent(const FMoveIntent& Intent);
+    virtual void ApplyMoveIntent_Implementation(const FMoveIntent& Intent);
+
+    UFUNCTION(BlueprintNativeEvent, Category = "AI")
+    void OnPostMove();
+    virtual void OnPostMove_Implementation();
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Enemy|Movement")
-	EFaceDirection Direction;
+    UFUNCTION(BlueprintNativeEvent, Category = "Combat")
+    void ApplyDamage(int Amount, EFaceDirection HitDirection);
+    virtual void ApplyDamage_Implementation(int Amount, EFaceDirection HitDirection);
 	
-	UFUNCTION(BlueprintNativeEvent, Category="Enemy|Health")
-	void ApplyDamage(int Amount, EFaceDirection HitDirection);
-	virtual void ApplyDamage_Implementation(int Amount, EFaceDirection HitDirection);
+    UFUNCTION(BlueprintImplementableEvent, Category = "Effects")
+    void OnDamageTaken(int Amount, EFaceDirection HitDirection);
+    
+    UFUNCTION(BlueprintImplementableEvent, Category = "Effects")
+    void OnDeath();
+
+    virtual bool CanMoveToTile(AGoTile* Tile) const override;
 	
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Enemy|Health")
-	int Health;
-
-	//HELPERS
-	FIntPoint GetDirectionDelta(const EFaceDirection DirectionValue) const;
-
-	EFaceDirection GetDirectionFromDelta(FIntPoint& Delta) const;
-
-	EFaceDirection GetOppositeDirection() const;
-	
-	UPROPERTY()
-	AGoTileManager* TileManager;
-
-	UPROPERTY()
-	AGoEnemyManager* EnemyManager;
-	
-	FOnEnemyDeath OnEnemyDeath;
+    bool CanMoveToTileIndex(int TileIndex) const;
 };

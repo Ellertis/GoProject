@@ -15,10 +15,12 @@ AGoTile::AGoTile()
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
 	MeshComponent->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
 	MeshComponent->SetCollisionResponseToChannel(ECC_Click,ECR_Block);
+	MeshComponent->SetMobility(EComponentMobility::Movable);
 	
 	DebugMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DebugStaticMesh"));
 	DebugMeshComponent->AttachToComponent(Root, FAttachmentTransformRules::KeepRelativeTransform);
 	DebugMeshComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	DebugMeshComponent->SetMobility(EComponentMobility::Movable);
 	
 	DebugMeshComponent->SetRelativeLocation(FVector(0.0f, 0.0f, 100.0f));
 	DebugMeshComponent->SetWorldScale3D(FVector(0.5f, 0.5f, 0.5f));
@@ -56,9 +58,13 @@ void AGoTile::UpdateDebugColors() const
 {
 	switch(TileType)
 	{
-		case ETileType::Start: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::Green);break;
-		case ETileType::End: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::Red);break;
-		default: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::Black);break;
+	case ETileType::Start: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::Green);break;
+	case ETileType::End: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::Red);break;
+	case ETileType::Normal: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::White);break;
+	case ETileType::Void: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::Black);break;
+	case ETileType::Sandwich: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::Yellow);break;
+	case ETileType::Jake: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::Blue);break;
+	default: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::White);break;
 	}
 }
 

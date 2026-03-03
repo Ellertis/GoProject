@@ -6,25 +6,22 @@
 #include "GameFramework/Actor.h"
 #include "GoCameraActor.generated.h"
 
-UCLASS()
+class UCameraComponent;
+
+UCLASS(Blueprintable)
 class GOPROJECT_API AGoCameraActor : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
+    
+public:    
 	AGoCameraActor();
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UCameraComponent* CameraComponent;
 
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	USceneComponent* SceneComponent;
 
-protected:
-	//Components
-	UPROPERTY(VisibleAnywhere,BlueprintReadOnly)
-	USceneComponent* Root;
+	UFUNCTION(BlueprintImplementableEvent, Category = "Camera")
+	void OnCameraFocus(AGoTile* FocusTile);
 };

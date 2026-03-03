@@ -1,105 +1,123 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "Core/GoGameModeBase.h"
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
-#include "Slate/SGameLayerManager.h"
 
 void AGoGameModeBase::BeginPlay()
 {
     Super::BeginPlay();
-	TM = Cast<AGoTileManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGoTileManager::StaticClass()));
-	if(!TM) return;
-	SpawnEnemyManager();
-	if(!EnemyManager)return;
-	SpawnTurnManager();
-	if(!TurnManager)return;
-	
-	TurnManager->OnTurnPhaseChanged.AddDynamic(EnemyManager,&AGoEnemyManager::OnNewEnemyTurn);
-	
-	EnemyManager->NoRemainingEnemyTurns.AddDynamic(TurnManager,&AGoTurnManager::OnNoEnemyTurnsLeft);
-	EnemyManager->GunterIsDead.AddDynamic(this, &AGoGameModeBase::AGoGameModeBase::GameOver);
-	EnemyManager->TileManager = TM;
-	
-	TM->OnGridGenerated.AddDynamic(this, &AGoGameModeBase::OnGridGenerated);
-	TM->EnemyManager = EnemyManager;
-	TM->LoadGridFromDataAsset(TM->DataAsset);
+    
+    TM = Cast<AGoTileManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGoTileManager::StaticClass()));
+    if(!TM) return;
+    
+    SpawnEnemyManager();
+    if(!EnemyManager) return;
+    
+    SpawnTurnManager();
+    if(!TurnManager) return;
+    
+    TurnManager->OnTurnPhaseChanged.AddDynamic(EnemyManager, &AGoEnemyManager::OnNewEnemyTurn);
+    
+    EnemyManager->NoRemainingEnemyTurns.AddDynamic(TurnManager, &AGoTurnManager::OnNoEnemyTurnsLeft);
+    EnemyManager->GunterIsDead.AddDynamic(this, &AGoGameModeBase::GameOver);
+    EnemyManager->TileManager = TM;
+    
+    TM->OnGridGenerated.AddDynamic(this, &AGoGameModeBase::OnGridGenerated);
+    TM->EnemyManager = EnemyManager;
+    TM->LoadGridFromDataAsset(TM->DataAsset);
 }
 
 void AGoGameModeBase::GameOver()
 {
-	// Call UI //Restart Level 
+    OnGameOver.Broadcast();
+    // UI will be handled by Blueprint
 }
 
-AGoPawnPlayer* AGoGameModeBase::GetPlayer() const
+void AGoGameModeBase::RestartLevel()
 {
-	return PlayerPawn;
+    UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()));
 }
 
 void AGoGameModeBase::OnGridGenerated()
 {
-	SpawnPlayer();
-	PlayerPawn->TurnManager = TurnManager;
-	PlayerPawn->OnPlayerMovement.AddDynamic(TurnManager,&AGoTurnManager::PlayerMoved);
-	SpawnCamera();
-	EnemyManager->PlayerRef = GetPlayer();
-	TurnManager->StartGame();
+    UE_LOG(LogTemp, Display, TEXT("GoGameModeBase: GridGeneration started"));
+    
+    SpawnPlayer();
+    PlayerPawn->TurnManager = TurnManager;
+    PlayerPawn->OnPlayerMovement.AddDynamic(TurnManager, &AGoTurnManager::PlayerMoved);
+    EnemyManager->PlayerRef = PlayerPawn;
+    
+    SpawnCamera();
+    TurnManager->StartGame();
 }
 
 void AGoGameModeBase::SpawnPlayer()
 {
-	if(!PlayerPawnClass) return;
-	
-	PlayerPawn = GetWorld()->SpawnActor<AGoPawnPlayer>(
-		PlayerPawnClass,
-		FVector(0, 0, 0),
-		FRotator::ZeroRotator
-	);
-	
-	PlayerController = Cast<AGoPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
-	if(!PlayerController) return;
-	PlayerController->Possess(PlayerPawn);
-	UE_LOG(LogTemp, Display, TEXT("SpawnPlayer & Possess"));
+    if(!PlayerPawnClass) {UE_LOG(LogTemp, Error, TEXT("GoGameModeBase: PlayerPawnClass is null"));return;}
+    
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+    
+    PlayerPawn = GetWorld()->SpawnActor<AGoPawnPlayer>(
+        PlayerPawnClass,
+        FVector(0, 0, 0),
+        FRotator::ZeroRotator,
+        SpawnParams
+    );
+    
+    if (!PlayerPawn) {UE_LOG(LogTemp, Error, TEXT("GoGameModeBase: Failed to spawn player"));return;}
+    
+    PlayerController = Cast<AGoPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+    PlayerController->Possess(PlayerPawn);
 }
 
 void AGoGameModeBase::SpawnCamera()
 {
-	if (!CameraActorClass) return;
+    if (!CameraActorClass) {UE_LOG(LogTemp, Error, TEXT("GoGameModeBase: CameraActorClass is null!"));return;}
 
-	APlayerStart* PlayerStart = Cast<APlayerStart>(
-		UGameplayStatics::GetActorOfClass(GetWorld(), APlayerStart::StaticClass()));
-	if (!PlayerStart) return;
+    APlayerStart* PlayerStart = Cast<APlayerStart>(
+        UGameplayStatics::GetActorOfClass(GetWorld(), APlayerStart::StaticClass()));
+    
+    FVector CameraLocation = FVector::ZeroVector;
+    FRotator CameraRotation = FRotator::ZeroRotator;
+    
+    if (PlayerStart)
+    {
+        CameraLocation = PlayerStart->GetActorLocation();
+        CameraRotation = PlayerStart->GetActorRotation();
+    }
+    
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	FVector CameraLocation = PlayerStart->GetActorLocation();
-	FRotator CameraRotation = PlayerStart->GetActorRotation();
+    CameraActor = GetWorld()->SpawnActor<AGoCameraActor>(
+        CameraActorClass,
+        CameraLocation,
+        CameraRotation,
+        SpawnParams
+    );
 
-	CameraActor = GetWorld()->SpawnActor<AGoCameraActor>(
-		CameraActorClass,
-		CameraLocation,
-		CameraRotation
-	);
-
-	PlayerController->SetViewTarget(CameraActor);
-	UE_LOG(LogTemp, Display, TEXT("Spawn Camera & Finished"));
+    if (!CameraActor) {UE_LOG(LogTemp, Error, TEXT("GoGameModeBase: Failed to spawn camera"));return;}
+    PlayerController->SetViewTarget(CameraActor);
 }
 
 void AGoGameModeBase::SpawnEnemyManager()
 {
-	if(!EnemyManagerClass)return;
-	EnemyManager = GetWorld()->SpawnActor<AGoEnemyManager>(
-		EnemyManagerClass,
-		FVector(0, 0, 0),
-		FRotator::ZeroRotator
-	);
+    if(!EnemyManagerClass) return;
+    EnemyManager = GetWorld()->SpawnActor<AGoEnemyManager>(
+        EnemyManagerClass,
+        FVector(0, 0, 0),
+        FRotator::ZeroRotator
+    );
 }
 
 void AGoGameModeBase::SpawnTurnManager()
 {
-	if(!TurnManagerClass)return;
-	TurnManager = GetWorld()->SpawnActor<AGoTurnManager>(
-		TurnManagerClass,
-		FVector(0, 0, 0),
-		FRotator::ZeroRotator
-	);
+    if(!TurnManagerClass) return;
+    TurnManager = GetWorld()->SpawnActor<AGoTurnManager>(
+        TurnManagerClass,
+        FVector(0, 0, 0),
+        FRotator::ZeroRotator
+    );
 }

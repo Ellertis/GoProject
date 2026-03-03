@@ -3,95 +3,125 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "InputMappingContext.h"
 #include "Core/GoPawn.h"
-#include "Gameplay/Tile/GoTileManager.h"
 #include "GoPawnPlayer.generated.h"
 
-class AGoEnemyManager;
-
-#define  ECC_Click ECollisionChannel::ECC_GameTraceChannel1
+class AGoPlayerController;
+class UInputMappingContext;
+class UInputAction;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerMovement);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerDeath);
 
-UCLASS()
+UCLASS(Blueprintable)
 class GOPROJECT_API AGoPawnPlayer : public AGoPawn
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
+
 public:
-	// Sets default values for this pawn's properties
-	AGoPawnPlayer();
+    AGoPawnPlayer();
+
+    UPROPERTY(BlueprintReadWrite, Category = "References")
+    AGoPlayerController* PlayerController;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    UInputMappingContext* DefaultMappingContext;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    UInputAction* ClickAction;
+	
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    UInputAction* JakePlacementAction;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Jake")
+    TSubclassOf<AGoTile> JakeTileClass;
+    
+    UPROPERTY(BlueprintReadOnly, Category = "Jake")
+    AGoTile* CurrentJakeTile;
+    
+    UPROPERTY(BlueprintReadOnly, Category = "Jake")
+    AGoTile* OriginalVoidTile;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Jake")
+    bool bIsJakePlacementMode = false;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Jake")
+    TArray<AGoTile*> HighlightedJakeTiles;
+
+    UPROPERTY(BlueprintAssignable, Category = "Events")
+    FOnPlayerMovement OnPlayerMovement;
+	
+    UFUNCTION(BlueprintNativeEvent, Category = "Effects")
+    void OnCollectSandwich();
+    virtual void OnCollectSandwich_Implementation();
+    
+    UFUNCTION(BlueprintNativeEvent, Category = "Effects")
+    void OnPlaceJakeTile();
+    virtual void OnPlaceJakeTile_Implementation();
+    
+    UFUNCTION(BlueprintNativeEvent, Category = "Effects")
+    void OnRemoveJakeTile();
+    virtual void OnRemoveJakeTile_Implementation();
+	
+    UFUNCTION(BlueprintNativeEvent, Category = "Effects")
+    void OnEnterJakePlacementMode();
+    virtual void OnEnterJakePlacementMode_Implementation();
+    
+    UFUNCTION(BlueprintNativeEvent, Category = "Effects")
+    void OnExitJakePlacementMode();
+    virtual void OnExitJakePlacementMode_Implementation();
+
+    virtual void BeginPlay() override;
+    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+    virtual void PossessedBy(AController* NewController) override;
+
+    UFUNCTION(BlueprintCallable)
+    void PlacePlayer(AGoTile* Tile);
+    
+    UFUNCTION()
+    void OnClickTrigger();
+    
+    UFUNCTION()
+    void OnClickReleased();
+	
+    UFUNCTION()
+    void OnJakePlacementTriggered();
+    
+    virtual TArray<AGoTile*> GetValidMoveTiles() const override;
+    
+    UFUNCTION(BlueprintCallable)
+    void MoveToTile(AGoTile* Tile);
+    
+    void ToggleHighlightNeighbors(bool value) const;
+    void FinishTurn() const;
+
+    UFUNCTION(BlueprintCallable)
+    void CollectSandwich();
+	
+    UFUNCTION(BlueprintCallable)
+    void ToggleJakePlacementMode();
+
+    UFUNCTION(BlueprintCallable)
+    void EnterJakePlacementMode();
+
+    UFUNCTION(BlueprintCallable)
+    void ExitJakePlacementMode();
+    
+    UFUNCTION(BlueprintCallable)
+    bool TryPlaceJakeTile(AGoTile* TargetVoidTile);
+    
+    UFUNCTION(BlueprintCallable)
+    void RemoveJakeTile();
+    
+    UFUNCTION(BlueprintCallable)
+    TArray<AGoTile*> GetValidJakePlacementTiles() const;
 
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-	// Variables
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player|Input")
-	UInputMappingContext* DefaultMappingContext;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player|Input")
-	UInputAction* ClickAction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player|Input")
-	UInputAction* TouchAction;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player|Ability")
-	bool bIsAlive = true;
+    UPROPERTY()
+    AActor* SelectedActor;
+    
+    void OnJakeTileExited();
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player|Ability")
-	bool bIsMoving = false;
+	void UpdateJakePlacementHighlights();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player|Ability")
-	bool bCanClickTile = false;
-	
-	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Player|Tile")
-	AGoTile* TargetTile;
-	
-	UPROPERTY()
-	AActor* SelectedActor;
-
-	UPROPERTY()
-	APlayerController* PlayerController;
-
-	UPROPERTY()
-	AGoTileManager* TM;
-	
-	UPROPERTY()
-	AGoEnemyManager* EnemyManager;
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-	
-	// Called on possession
-	virtual void PossessedBy(AController* NewController) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	void PlacePlayer(AGoTile* Tile);
-	
-	UPROPERTY()
-	AGoTurnManager* TurnManager;
-
-	FOnPlayerMovement OnPlayerMovement;
-	FOnPlayerDeath OnPlayerDeath;
-	
-	UFUNCTION(BlueprintNativeEvent)
-	void MoveToTile(AGoTile* Tile);
-	virtual void MoveToTile_Implementation(AGoTile* Tile);
-
-private:
-	void OnClickTrigger();
-	
-	void OnClickReleased();
-	
-	TArray<AGoTile*> GetValidMoveTiles() const;
-
-	void ToggleHighlightNeighbors(bool value) const;
-
-	void  FinishTurn() const;
-	
+	void ClearJakePlacementHighlights();
 };

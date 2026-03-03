@@ -73,12 +73,12 @@ void AGoTileManager::TilesSpawner()
 
 int AGoTileManager::Get1DIndex(int indX, int indY) const
 {
-	return indX + indY * X; //transforms 2d array into 1d array
+	return indX + indY * X; // transforms 2d array into 1d array
 }
 
 FIntPoint AGoTileManager::Get2DIndex(int TileInd) const
 {
-	return FIntPoint(TileInd % X, TileInd / X);
+	return FIntPoint(TileInd % X, TileInd / X); // get 2d coordinate of a tile from its index
 }
 
 FIntPoint AGoTileManager::GetDeltaIndex(int TileAInd, int TileBInd) const
@@ -89,7 +89,7 @@ FIntPoint AGoTileManager::GetDeltaIndex(int TileAInd, int TileBInd) const
 
 bool AGoTileManager::IsValidIndex(int indX, int indY) const
 {
-	return indX >= 0 && indY >= 0 && indX < X && indY < Y;
+	return indX >= 0 && indY >= 0 && indX < X && indY < Y; // is tile in the grid
 }
 
 TArray<AGoTile*> AGoTileManager::GetTilesWithType(ETileType TileType)
@@ -241,7 +241,7 @@ void AGoTileManager::LoadGridFromDataAsset(UBoardDataAsset* DataAssetToLoad)
 		Tile->Neighbors = TileData.Neighbors;
 		Tile->TileType = TileData.TileType;
 		Tile->Walkable = TileData.Walkable;
-		Tile->UpdateDebugColors(); //Updates the debug color on the tile
+		Tile->UpdateDebugColors();
 	}
 	
 	VisualizeConnections();

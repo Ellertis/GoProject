@@ -3,92 +3,97 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GoPawnEnemy.h"
-#include "GoSnowball.h"
 #include "GameFramework/Actor.h"
-#include "Gameplay/GoTurnManager.h"
-#include "Gameplay/Tile/BoardDataAsset.h"
 #include "GoEnemyManager.generated.h"
 
+class AGoSnowball;
+class AGoTileManager;
 class AGoPawnPlayer;
+class AGoPawnEnemy;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FNoRemainingEnemyTurns);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGunterIsDead);
 
-UCLASS()
+UCLASS(Blueprintable)
 class GOPROJECT_API AGoEnemyManager : public AActor
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
+
+public:
+    AGoEnemyManager();
+
+    UPROPERTY(BlueprintReadWrite, Category = "References")
+    AGoTileManager* TileManager;
+    
+    UPROPERTY(BlueprintReadWrite, Category = "References")
+    AGoPawnPlayer* PlayerRef;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Enemies")
+    TArray<AGoPawnEnemy*> Enemies;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Enemies")
+    TMap<int, AGoPawnEnemy*> OccupiedTiles;
+    
+    UPROPERTY(BlueprintReadOnly, Category = "Enemies")
+    int PlayerTileIndex = -1;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Snowball")
+    TArray<AGoSnowball*> ActiveSnowballs;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Snowball")
+    TSubclassOf<AGoSnowball> SnowballClass;
+
+    UPROPERTY(BlueprintAssignable, Category = "Events")
+    FNoRemainingEnemyTurns NoRemainingEnemyTurns;
+    
+    UPROPERTY(BlueprintAssignable, Category = "Events")
+    FGunterIsDead GunterIsDead;
+    
+    UPROPERTY(BlueprintReadWrite, Category = "State")
+    bool bWaitingToEndTurn;
+    
+    UPROPERTY(BlueprintReadWrite, Category = "State")
+    bool bIsProcessingTurn;
+
+    UFUNCTION()
+    void OnNewEnemyTurn(const ETurnPhase NewTurnPhase);
+    
+    UFUNCTION()
+    void RemoveEnemyFromList(AGoPawnEnemy* EnemyRef);
+
+    UFUNCTION(BlueprintCallable)
+    void SpawnEnemy(FTransform Transform, TSubclassOf<AGoPawnEnemy> EnemyClass, AGoTile* TileRef, EFaceDirection Direction);
+    
+    UFUNCTION(BlueprintCallable)
+    void UpdateOccupancy();
+    
+    UFUNCTION(BlueprintCallable)
+    bool IsTileOccupied(int TileIndex, const AGoPawnEnemy* ExcludeEnemy = nullptr) const;
+
+    UFUNCTION(BlueprintCallable)
+    void RegisterSnowball(AGoSnowball* Snowball);
+    
+    UFUNCTION(BlueprintCallable)
+    void UnregisterSnowball(AGoSnowball* Snowball);
+    
+    UFUNCTION(BlueprintCallable)
+    void TryEndTurn();
+    
+    UFUNCTION(BlueprintCallable)
+    void EndTurn();
 	
-public:	
-	// Sets default values for this actor's properties
-	AGoEnemyManager();
-
-	UPROPERTY(EditAnywhere, Category="Classes")
-	TSubclassOf<AGoSnowball> SnowballClass;
-	
-	UPROPERTY(EditAnywhere,BlueprintReadOnly)
-	TArray<AGoPawnEnemy*> Enemies;
-	
-	UPROPERTY()
-	AGoTurnManager* TurnManager;
-
-	UPROPERTY()
-	AGoTileManager* TileManager;
-
-	UPROPERTY()
-	AGoPawnPlayer* PlayerRef = nullptr;
-
-	FNoRemainingEnemyTurns NoRemainingEnemyTurns;
-	
-	FGunterIsDead GunterIsDead;
-
+    UFUNCTION(BlueprintImplementableEvent, Category = "Effects")
+    void OnSnowmanAttack(const FVector& Start, const FVector& End, EFaceDirection Direction);
+    
+    UFUNCTION(BlueprintImplementableEvent, Category = "Effects")
+    void OnEnemySpawned(AGoPawnEnemy* Enemy);
+    
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
+    virtual void BeginPlay() override;
+    virtual void Tick(float DeltaTime) override;
 
-	void CheckSnowmanAttacks();
-	
-	UPROPERTY()
-	TMap<int, AGoPawnEnemy*> OccupiedTiles;
-
-	UPROPERTY()
-	int PlayerTileIndex = -1;
-
-	UPROPERTY()
-	TArray<AGoSnowball*> ActiveSnowballs;
-
-	bool bWaitingToEndTurn = false;
-
-	bool bGunterNeedsMove = false;
-	
-	void TryEndTurn();
-
-	void ProcessGunterReaction();
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	void SpawnEnemy(FTransform Transform, TSubclassOf<AGoPawnEnemy> EnemyClass,AGoTile* TileRef,EFaceDirection Direction);
-
-	UFUNCTION()
-	void RemoveEnemyFromList(AGoPawnEnemy* EnemyRef);
-
-	UFUNCTION()
-	void OnNewEnemyTurn(const ETurnPhase NewTurnPhase);
-
-	UFUNCTION()
-	void UpdateOccupancy();
-	
-	UFUNCTION()
-	bool IsTileOccupied(int TileIndex, const AGoPawnEnemy* ExcludeEnemy = nullptr) const;
-
-	UFUNCTION()
-	void RegisterSnowball(AGoSnowball* Snowball);
-
-	UFUNCTION()
-	void UnregisterSnowball(AGoSnowball* Snowball);
-
-	UFUNCTION()
-	void EndTurn();
+    void CheckSnowmanAttacks();
+    
+    UPROPERTY()
+    class UGoPathfindingSubsystem* PathfindingSubsystem;
 };

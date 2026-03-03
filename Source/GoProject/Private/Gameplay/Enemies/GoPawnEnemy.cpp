@@ -1,87 +1,69 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "Gameplay/Enemies/GoPawnEnemy.h"
-#include "Gameplay/Tile/BoardDataAsset.h"
-#include "Gameplay/Tile/GoTileManager.h"
+#include "Gameplay/Enemies/GoEnemyManager.h"
+#include "Gameplay/Tile/GoTile.h"
 
+AGoPawnEnemy::AGoPawnEnemy()
+{
+    Direction = EFaceDirection::Xplus;
+}
 
 void AGoPawnEnemy::PreTurnUpdate_Implementation()
 {
+	
 }
 
-FEnemyMoveIntent AGoPawnEnemy::ComputeMoveIntent_Implementation() const
+FMoveIntent AGoPawnEnemy::ComputeMoveIntent_Implementation() const
 {
-	UE_LOG(LogTemp, Error, TEXT("AGoPawnEnemy::ComputeMoveIntent_Implementation called directly! Derived class must override this method."));
-
-	FEnemyMoveIntent Intent;
-	Intent.TargetTile = CurrTile; 
-	Intent.NewDirection = Direction;
-	return Intent;
+    FMoveIntent Intent;
+    Intent.TargetTile = CurrTile; 
+    Intent.NewDirection = Direction;
+    return Intent;
 }
 
-
-void AGoPawnEnemy::ApplyMoveIntent_Implementation(const FEnemyMoveIntent& Intent)
+void AGoPawnEnemy::ApplyMoveIntent_Implementation(const FMoveIntent& Intent)
 {
-	if (!Intent.TargetTile) return;
+    if (!Intent.TargetTile) return;
+    
+    OnMoveStart();
 	
-	float ZOffset = TileManager ? TileManager->ZOffset * 2 : 100.0f;
-	SetActorLocation(Intent.TargetTile->GetActorLocation() + FVector(0, 0, ZOffset));
+    FRotator NewRotation = FRotator::ZeroRotator;
+    switch (Intent.NewDirection)
+    {
+        case EFaceDirection::Xplus:  NewRotation = FRotator(0, 0, 0); break;
+        case EFaceDirection::Xminus: NewRotation = FRotator(0, 180, 0); break;
+        case EFaceDirection::Yplus:  NewRotation = FRotator(0, 90, 0); break;
+        case EFaceDirection::Yminus: NewRotation = FRotator(0, -90, 0); break;
+    }
 	
-	CurrTile = Intent.TargetTile;
-	
-	Direction = Intent.NewDirection;
-	FRotator NewRotation = FRotator::ZeroRotator;
-	switch (Direction)
-	{
-		case EFaceDirection::Xplus:  NewRotation = FRotator(0, 0, 0); break;
-		case EFaceDirection::Xminus: NewRotation = FRotator(0, 180, 0); break;
-		case EFaceDirection::Yplus:  NewRotation = FRotator(0, 90, 0); break;
-		case EFaceDirection::Yminus: NewRotation = FRotator(0, -90, 0); break;
-	}
-	SetActorRotation(NewRotation);
-}
+    SetActorRotation(NewRotation);
+    Direction = Intent.NewDirection;
 
+	OnMoveToTile(Intent.TargetTile);
+    OnMoveEnd();
+}
 
 void AGoPawnEnemy::OnPostMove_Implementation()
 {
-	UE_LOG(LogTemp, Error, TEXT("AGoPawnEnemy::OnPostMove_Implementation called directly! Derived class must override this method."));
+    // Base implementation
 }
 
 void AGoPawnEnemy::ApplyDamage_Implementation(int Amount, EFaceDirection HitDirection)
 {
-	UE_LOG(LogTemp, Error, TEXT("AGoPawnEnemy::TakeDamage_Implementation called directly! Derived class must override this method."));
+    OnDamageTaken(Amount, HitDirection);
 }
 
-FIntPoint AGoPawnEnemy::GetDirectionDelta(const EFaceDirection DirectionValue) const
+bool AGoPawnEnemy::CanMoveToTile(AGoTile* Tile) const
 {
-	switch (DirectionValue)
-	{
-		case EFaceDirection::Xplus: return FIntPoint(1,0);
-		case EFaceDirection::Xminus: return FIntPoint(-1,0);
-		case EFaceDirection::Yplus: return FIntPoint(0,1);
-		case EFaceDirection::Yminus: return FIntPoint(0,-1);
-		default: return FIntPoint(0,0);
-	}
+    if (!Super::CanMoveToTile(Tile)) return false;
+    if (!EnemyManager || !Tile) return true;
+
+    return !EnemyManager->IsTileOccupied(Tile->Index, this);
 }
 
-EFaceDirection AGoPawnEnemy::GetDirectionFromDelta(FIntPoint& Delta) const
+bool AGoPawnEnemy::CanMoveToTileIndex(int TileIndex) const
 {
-	if (Delta.X > 0) return EFaceDirection::Xplus;
-	if (Delta.X < 0) return EFaceDirection::Xminus;
-	if (Delta.Y > 0) return EFaceDirection::Yplus;
-	if (Delta.Y < 0) return EFaceDirection::Yminus;
-	UE_LOG(LogTemp,Error,TEXT("GoPawnEnemy Normally unreachable path reached, GetDirectionFromDelta input Delta is (0,0)"));
-	return Direction;
-}
-
-EFaceDirection AGoPawnEnemy::GetOppositeDirection() const
-{
-	switch (Direction){
-		case EFaceDirection::Xplus: return EFaceDirection::Xminus;
-		case EFaceDirection::Xminus: return EFaceDirection::Xplus;
-		case EFaceDirection::Yplus: return EFaceDirection::Yminus;
-		case EFaceDirection::Yminus: return EFaceDirection::Yplus;
-		default: return EFaceDirection::Xplus;
-	}
+    AGoTile* Tile = GetTileFromIndex(TileIndex);
+    return CanMoveToTile(Tile);
 }

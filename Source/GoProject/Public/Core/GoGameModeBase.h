@@ -3,67 +3,83 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GoPlayerController.h"
 #include "GameFramework/GameModeBase.h"
-#include "Player/GoCameraActor.h"
+#include "Gameplay/GoTurnManager.h"
+#include "Core/GoPlayerController.h"
+#include "Gameplay/Enemies/GoEnemyManager.h"
 #include "Player/GoPawnPlayer.h"
+#include "Player/GoCameraActor.h"
 #include "GoGameModeBase.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameOver);
 
 UCLASS()
 class GOPROJECT_API AGoGameModeBase : public AGameModeBase
 {
-	GENERATED_BODY()
-	
+    GENERATED_BODY()
+
 public:
-	UFUNCTION()
-	virtual void BeginPlay() override;
+    virtual void BeginPlay() override;
 
-	UFUNCTION()
-	void GameOver();
+    UFUNCTION(BlueprintCallable)
+    void GameOver();
 
-	UFUNCTION()
-	AGoPawnPlayer* GetPlayer() const;
+    UFUNCTION(BlueprintCallable)
+    AGoPawnPlayer* GetPlayer() const { return PlayerPawn; }
+    
+    UFUNCTION(BlueprintCallable)
+    void RestartLevel();
+	
+    UFUNCTION(BlueprintCallable)
+    int GetSandwichCount() const { return SandwichCount; }
+    
+    UFUNCTION(BlueprintCallable)
+    void AddSandwich(int Amount) { SandwichCount += Amount; }
+    
+    UFUNCTION(BlueprintCallable)
+    bool UseSandwich() { if (SandwichCount > 0) { SandwichCount--; return true; } return false; }
+	
+    UPROPERTY(BlueprintAssignable)
+    FOnGameOver OnGameOver;
 
 protected:
-	UPROPERTY(EditDefaultsOnly, Category="Classes")
-	TSubclassOf<AGoCameraActor> CameraActorClass;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Managers")
+    TSubclassOf<AGoEnemyManager> EnemyManagerClass;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Managers")
+    TSubclassOf<AGoTurnManager> TurnManagerClass;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Player")
+    TSubclassOf<AGoPawnPlayer> PlayerPawnClass;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
+    TSubclassOf<AGoCameraActor> CameraActorClass;
 
-	UPROPERTY(EditDefaultsOnly, Category="Classes")
-	TSubclassOf<AGoPawnPlayer> PlayerPawnClass;
+    UPROPERTY()
+    AGoTileManager* TM;
+    
+    UPROPERTY()
+    AGoEnemyManager* EnemyManager;
+    
+    UPROPERTY()
+    AGoTurnManager* TurnManager;
+    
+    UPROPERTY()
+    AGoPawnPlayer* PlayerPawn;
+    
+    UPROPERTY()
+    AGoPlayerController* PlayerController;
+    
+    UPROPERTY()
+    AGoCameraActor* CameraActor;
 
-	UPROPERTY(EditDefaultsOnly, Category="Classes")
-	TSubclassOf<AGoEnemyManager> EnemyManagerClass;
+    int SandwichCount = 0;
 
-	UPROPERTY(EditDefaultsOnly, Category="Classes")
-	TSubclassOf<AGoTurnManager> TurnManagerClass;
-	
-	UPROPERTY()
-	AGoEnemyManager* EnemyManager;
-
-	UPROPERTY()
-	AGoTurnManager* TurnManager;
-
-private:
-	UPROPERTY()
-	AGoCameraActor* CameraActor;
-
-	UPROPERTY()
-	AGoPawnPlayer* PlayerPawn;
-
-	UPROPERTY()
-	AGoPlayerController* PlayerController;
-
-	UPROPERTY()
-	AGoTileManager* TM;
-
-	UFUNCTION()
-	void OnGridGenerated();
-	
-	void SpawnPlayer();
-
-	void SpawnCamera();
-	
-	void SpawnEnemyManager();
-	
-	void SpawnTurnManager();
+    UFUNCTION()
+    void OnGridGenerated();
+    
+    void SpawnEnemyManager();
+    void SpawnTurnManager();
+    void SpawnPlayer();
+    void SpawnCamera();
 };

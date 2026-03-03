@@ -4,54 +4,83 @@
 
 #include "CoreMinimal.h"
 #include "Gameplay/Enemies/GoPawnEnemy.h"
-#include "Player/GoPawnPlayer.h"
 #include "GoPawnEnemyGunter.generated.h"
 
-UCLASS()
+class AGoPawnPlayer;
+
+UCLASS(Blueprintable)
 class GOPROJECT_API AGoPawnEnemyGunter : public AGoPawnEnemy
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	AGoPawnEnemyGunter();
+    AGoPawnEnemyGunter();
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Pawn|Health")
-	int StartHealth = 3;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gunter")
+    int Health;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gunter")
+    int StartHealth = 3;
 
-	virtual void PreTurnUpdate_Implementation() override;
+    UPROPERTY(BlueprintReadWrite, Category = "References")
+    AGoPawnPlayer* PlayerRef;
+
+    UPROPERTY(BlueprintReadWrite, Category = "State")
+    AGoTile* PrevTile;
+
+    UPROPERTY(BlueprintReadWrite, Category = "State")
+    bool bIsFleeing;
+    
+    UPROPERTY(BlueprintReadWrite, Category = "State")
+    bool bWasHitThisTurn;
+    
+    UPROPERTY(BlueprintReadWrite, Category = "State")
+    int FleeAttempts;
+
+    UPROPERTY(BlueprintReadWrite, Category = "State")
+    EFaceDirection PostHitDirection;
+
+    UPROPERTY(BlueprintReadWrite, Category = "State")
+    TArray<EFaceDirection> PreferredFleeOrder;
+
+    UPROPERTY(BlueprintReadWrite, Category = "State")
+    EFaceDirection FleeDirection;
+
+    int MaxFleeAttempts = 1;
+
+    virtual void PreTurnUpdate_Implementation() override;
+    virtual FMoveIntent ComputeMoveIntent_Implementation() const override;
+    virtual void ApplyMoveIntent_Implementation(const FMoveIntent& Intent) override;
+    virtual void OnPostMove_Implementation() override;
+    virtual void ApplyDamage_Implementation(int Amount, EFaceDirection HitDirection) override;
+
+    UFUNCTION(BlueprintCallable)
+    void StartFleeing(bool bSetDirection = true, EFaceDirection AwayDir = EFaceDirection::Xplus);
+    
+    UFUNCTION(BlueprintCallable)
+    bool IsFleeing() const { return bIsFleeing; }
+    
+    UFUNCTION(BlueprintCallable)
+    bool WasHitThisTurn() const { return bWasHitThisTurn; }
+    
+    UFUNCTION(BlueprintCallable)
+    void ClearHitFlag() { bWasHitThisTurn = false; }
+
+    UPROPERTY(BlueprintReadWrite, Category = "State")
+    bool bHasPendingFlee = false;
+
+    UPROPERTY(BlueprintReadWrite, Category = "State")
+    EFaceDirection PendingFleeDirection;
 	
-	virtual FEnemyMoveIntent ComputeMoveIntent_Implementation() const override;
-	
-	virtual void ApplyMoveIntent_Implementation(const FEnemyMoveIntent& Intent) override;
-	
-	virtual void OnPostMove_Implementation() override;
+	bool CanMoveToTileIndex(int TileIndex) const;
 
-	virtual void ApplyDamage_Implementation(int Amount, EFaceDirection HitDirection) override;
-
-	void StartFleeing(bool bSetDirection, EFaceDirection AwayDir);
+	EFaceDirection GetBestFleeDirection(int PlayerTileIndex) const;
 
 	int CountWalkableTilesInDirection(const FIntPoint& StartCoord, EFaceDirection Dir, int IgnoreTileIndex) const;
 
-	UFUNCTION()
-	bool IsFleeing() const { return bIsFleeing; }
-    
-	UFUNCTION()
-	bool WasHitThisTurn() const { return bWasHitThisTurn; }
-    
-	UFUNCTION()
-	void ClearHitFlag() { bWasHitThisTurn = false; }
-
 protected:
-	virtual void BeginPlay() override;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Pawn|Movement")
-	bool bIsFleeing = false;
-
-	bool bWasHitThisTurn = false;
-	
-	UPROPERTY()
-	AGoPawnPlayer* PlayerRef = nullptr;
-
-	UPROPERTY()
-	AGoTile* PrevTile = nullptr;
+    virtual void BeginPlay() override;
+    
+    UPROPERTY()
+    class UGoPathfindingSubsystem* PathfindingSubsystem;
 };

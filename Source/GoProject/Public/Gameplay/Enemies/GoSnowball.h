@@ -3,54 +3,57 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/SphereComponent.h"
 #include "GameFramework/Actor.h"
+#include "Components/SphereComponent.h"
 #include "Gameplay/Tile/BoardDataAsset.h"
 #include "GoSnowball.generated.h"
 
 class AGoEnemyManager;
 
-UCLASS()
+UCLASS(Blueprintable)
 class GOPROJECT_API AGoSnowball : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
+    
+public:    
 	AGoSnowball();
-	
-	void Launch(const FVector& Start, const FVector& End);
 
-	UPROPERTY()
-	AGoEnemyManager* EnemyManager;
-
-	UPROPERTY()
-	EFaceDirection ProjectedDirection;
-	
-protected:
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	USphereComponent* CollisionSphere;
+    
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* Mesh;
 
-	UPROPERTY(VisibleAnywhere)
-	USphereComponent* CollisionSphere;
+	UPROPERTY(BlueprintReadWrite)
+	AGoEnemyManager* EnemyManager;
+    
+	UPROPERTY(BlueprintReadWrite)
+	EFaceDirection ProjectedDirection;
+    
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Speed = 1000.0f;
 
-	UPROPERTY(EditDefaultsOnly)
-	float Speed = 500.0f; // units per second
-	
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	FVector TargetLocation;
-	
-	UPROPERTY()
+    
+	UPROPERTY(BlueprintReadOnly)
 	bool bMoving = false;
-	
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-	
+
+	UFUNCTION(BlueprintCallable)
+	void Launch(const FVector& Start, const FVector& End);
+    
 	UFUNCTION()
-	void OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+				   UPrimitiveComponent* OtherComp, int OtherBodyIndex, 
+				   bool bFromSweep, const FHitResult& SweepResult);
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Effects")
+	void OnSnowballHit(AActor* HitActor);
+    
+	UFUNCTION(BlueprintImplementableEvent, Category = "Effects")
+	void OnSnowballDestroyed();
 
-public:	
-	// Called every frame
+protected:
+	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
-
 };
