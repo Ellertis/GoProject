@@ -70,7 +70,7 @@ TArray<int> UGoPathfindingSubsystem::FindFleePath(int StartIndex, int PlayerInde
         if (Path.Num() > 0)
         {
             float PlayerDistance = Heuristic(Path.Last(), PlayerIndex);
-            float Score = PlayerDistance - (Path.Num() * 0.5f);
+            float Score = PlayerDistance - (Path.Num() * 0.5f); //Player proximity multiplier
             
             if (Score > BestScore)
             {

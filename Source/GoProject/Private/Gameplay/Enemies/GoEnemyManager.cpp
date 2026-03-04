@@ -68,7 +68,22 @@ void AGoEnemyManager::OnNewEnemyTurn(const ETurnPhase NewTurnPhase)
     CheckSnowmanAttacks();
     
     for (AGoPawnEnemy* Enemy : Enemies) {Enemy->OnPostMove();}
-    
+
+	if (PlayerRef && PlayerRef->CurrentJakeTile)
+	{
+		for (AGoPawnEnemy* Enemy : Enemies)
+		{
+			if (Enemy->CurrTile == PlayerRef->CurrentJakeTile)
+			{
+				PlayerRef->RegisterEntityOnJakeTile(Enemy);
+			}
+			else
+			{
+				PlayerRef->UnregisterEntityOnJakeTile(Enemy);
+			}
+		}
+	}
+	
     TryEndTurn();
 }
 
@@ -249,8 +264,14 @@ void AGoEnemyManager::TryEndTurn()
 
 void AGoEnemyManager::EndTurn()
 {
-    bWaitingToEndTurn = false;
-    bIsProcessingTurn = false;
-    NoRemainingEnemyTurns.Broadcast();
-    UE_LOG(LogTemp, Display, TEXT("Enemy turn ended"));
+	bWaitingToEndTurn = false;
+	bIsProcessingTurn = false;
+	
+	if (PlayerRef)
+	{
+		PlayerRef->CheckJakeTileRemoval();
+	}
+    
+	NoRemainingEnemyTurns.Broadcast();
+	UE_LOG(LogTemp, Display, TEXT("Enemy turn ended"));
 }

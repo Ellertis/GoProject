@@ -2,6 +2,7 @@
 
 #include "Core/GoPawn.h"
 #include "Gameplay/Tile/GoTile.h"
+#include "Player/GoPawnPlayer.h"
 
 AGoPawn::AGoPawn()
 {
@@ -14,6 +15,83 @@ AGoPawn::AGoPawn()
 void AGoPawn::BeginPlay()
 {
     Super::BeginPlay();
+}
+
+void AGoPawn::StartMoveToTile(AGoTile* Tile, float Duration)
+{
+	
+	if (!Tile || bIsMoving || !TileManager) return;
+    
+	TargetTile = Tile;
+	MoveDuration = Duration;
+	StartLocation = GetActorLocation();
+	TargetLocation = GetTilePosition(Tile);
+    
+	// Set the direction based on movement
+	if (CurrTile)
+	{
+		FIntPoint CurrentPos = TileManager->Get2DIndex(CurrTile->Index);
+		FIntPoint TargetPos = TileManager->Get2DIndex(Tile->Index);
+		FIntPoint Delta = TargetPos - CurrentPos;
+		Direction = GetDirectionFromDelta(Delta);
+	}
+    
+	bIsMoving = true;
+	
+	OnMoveStart();
+	
+	GetWorld()->GetTimerManager().SetTimer(MoveTimerHandle, this, 
+		&AGoPawn::UpdateMove, 0.016f, true);
+	
+}
+
+void AGoPawn::UpdateMove()
+{
+	UE_LOG(LogTemp, Display, TEXT("UpdateMove CALLED - bIsMoving=%d"), bIsMoving);
+	
+	if (!bIsMoving) return;
+	
+	float ElapsedTime = GetWorld()->GetTimerManager().GetTimerElapsed(MoveTimerHandle);
+	
+	float Alpha = FMath::Clamp(ElapsedTime / MoveDuration, 0.0f, 1.0f);
+	
+	FVector NewLocation = FMath::Lerp(StartLocation, TargetLocation, Alpha);
+	
+	float Height = GetJumpHeight_Implementation(Alpha);
+	NewLocation.Z += Height;
+    
+	SetActorLocation(NewLocation);
+	
+	if (Alpha >= 1.0f)
+	{
+		FinishMove();
+	}
+}
+
+void AGoPawn::FinishMove()
+{
+	if (!bIsMoving) return;
+	
+	GetWorld()->GetTimerManager().ClearTimer(MoveTimerHandle);
+	
+	SetActorLocation(TargetLocation);
+	CurrTile = TargetTile;
+	bIsMoving = false;
+	
+	OnMoveEnd();
+	OnMoveToTile(TargetTile);
+	
+	if (AGoPawnPlayer* Player = Cast<AGoPawnPlayer>(this))
+	{
+		Player->FinishTurn();
+	}
+}
+
+float AGoPawn::GetJumpHeight_Implementation(float Alpha)
+{
+	// Parabolic curve: 4 * Alpha * (1 - Alpha) peaks at 0.5
+	// Returns height offset at this point in the movement
+	return 100.0f * 4.0f * Alpha * (1.0f - Alpha);
 }
 
 bool AGoPawn::CanMoveToTile(AGoTile* Tile) const

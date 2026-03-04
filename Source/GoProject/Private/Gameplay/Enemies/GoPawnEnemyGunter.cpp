@@ -38,38 +38,24 @@ void AGoPawnEnemyGunter::PreTurnUpdate_Implementation()
     if (!TileManager || !CurrTile || !PlayerRef || !PlayerRef->CurrTile)
         return;
     
-    ClearHitFlag(); // Clear the boolean if Gunter was hit with a snowball the previous turn
+    ClearHitFlag();
 
-    if (bHasPendingFlee) // Should flee because was hit with a snowball before
+    if (bHasPendingFlee)
     {
         StartFleeing(true, PendingFleeDirection);
         bHasPendingFlee = false;
-        return;
     }
 	
     FIntPoint GunterPos = TileManager->Get2DIndex(CurrTile->Index);
     FIntPoint PlayerPos = TileManager->Get2DIndex(PlayerRef->CurrTile->Index);
     int ManhattanDist = FMath::Abs(GunterPos.X - PlayerPos.X) + FMath::Abs(GunterPos.Y - PlayerPos.Y);
-    
-    // If player is adjacent, flee in the opposite direction from him
+	
     if (ManhattanDist == 1)
     {
-        if (bIsFleeing)
-        {
-            // Check if the tile in the opposite direction to the player is free
-            FIntPoint TargetCoord = GunterPos + GetDirectionDelta(FleeDirection);
-            bool bCanMoveForward = TileManager->IsValidIndex(TargetCoord.X, TargetCoord.Y) &&
-                                   CanMoveToTileIndex(TileManager->Get1DIndex(TargetCoord.X, TargetCoord.Y));
-            
-            if (!bCanMoveForward) {bIsFleeing = false;} // Stop fleeing state
-            else {return;} // Tile is free
-        }
-        
-        // Re evaluate flee direction
         FIntPoint Delta = GunterPos - PlayerPos;
         EFaceDirection AwayDir = GetDirectionFromDelta(Delta);
-        
-        // Try to flee directly away from player // Edge cases
+    	
+        // Try to flee directly away from player
         FIntPoint TargetCoord = GunterPos + GetDirectionDelta(AwayDir);
         
         if (TileManager->IsValidIndex(TargetCoord.X, TargetCoord.Y))
@@ -85,18 +71,38 @@ void AGoPawnEnemyGunter::PreTurnUpdate_Implementation()
                 }
             }
         }
-        // TODO add proper pathfinding
-        // Try perpendicular directions, choose the one with LONGEST path
+        
+        // If away direction is blocked, try perpendicular directions to AwayDir
         EFaceDirection LeftDir, RightDir;
         switch (AwayDir)
         {
-            case EFaceDirection::Xplus:  LeftDir = EFaceDirection::Yminus; RightDir = EFaceDirection::Yplus; break;
-            case EFaceDirection::Xminus: LeftDir = EFaceDirection::Yplus;  RightDir = EFaceDirection::Yminus; break;
-            case EFaceDirection::Yplus:  LeftDir = EFaceDirection::Xminus; RightDir = EFaceDirection::Xplus;  break;
-            case EFaceDirection::Yminus: LeftDir = EFaceDirection::Xplus;  RightDir = EFaceDirection::Xminus; break;
-            default: LeftDir = RightDir = AwayDir;
+            case EFaceDirection::Xplus: LeftDir = EFaceDirection::Yminus;RightDir = EFaceDirection::Yplus;break;
+            case EFaceDirection::Xminus: LeftDir = EFaceDirection::Yplus;RightDir = EFaceDirection::Yminus;break;
+            case EFaceDirection::Yplus: LeftDir = EFaceDirection::Xminus;RightDir = EFaceDirection::Xplus;break;
+            case EFaceDirection::Yminus: LeftDir = EFaceDirection::Xplus;RightDir = EFaceDirection::Xminus;break;
+            default: LeftDir = RightDir = AwayDir;break;
         }
         
+        // Pathfinding
+        if (PathfindingSubsystem && PlayerRef)
+        {
+            TArray<int> LeftPath = PathfindingSubsystem->FindDirectionalFleePath(
+                CurrTile->Index, LeftDir, PlayerRef->CurrTile->Index);
+            TArray<int> RightPath = PathfindingSubsystem->FindDirectionalFleePath(
+                CurrTile->Index, RightDir, PlayerRef->CurrTile->Index);
+            int LeftPathLength = LeftPath.Num();
+            int RightPathLength = RightPath.Num();
+
+            if (LeftPathLength > 0 || RightPathLength > 0)
+            {
+                EFaceDirection ChosenDir = (LeftPathLength >= RightPathLength) ? LeftDir : RightDir;
+                UE_LOG(LogTemp, Display, TEXT("Gunter: Pathfinding chose direction %d"), (int)ChosenDir);
+                StartFleeing(true, ChosenDir);
+                return;
+            }
+        }
+        
+        // Fallback to perpendicular tile counting
         int LeftPathLength = 0;
         int RightPathLength = 0;
         
@@ -104,32 +110,21 @@ void AGoPawnEnemyGunter::PreTurnUpdate_Implementation()
         if (TileManager->IsValidIndex(LeftCoord.X, LeftCoord.Y))
         {
             int LeftIndex = TileManager->Get1DIndex(LeftCoord.X, LeftCoord.Y);
-            if (CanMoveToTileIndex(LeftIndex))
-            {
-                LeftPathLength = CountWalkableTilesInDirection(GunterPos, LeftDir, -1);
-            }
+            if (CanMoveToTileIndex(LeftIndex)) {LeftPathLength = CountWalkableTilesInDirection(GunterPos, LeftDir, -1);}
         }
         
         FIntPoint RightCoord = GunterPos + GetDirectionDelta(RightDir);
         if (TileManager->IsValidIndex(RightCoord.X, RightCoord.Y))
         {
             int RightIndex = TileManager->Get1DIndex(RightCoord.X, RightCoord.Y);
-            if (CanMoveToTileIndex(RightIndex))
-            {
-                RightPathLength = CountWalkableTilesInDirection(GunterPos, RightDir, -1);
-            }
+            if (CanMoveToTileIndex(RightIndex)) {RightPathLength = CountWalkableTilesInDirection(GunterPos, RightDir, -1);}
         }
         
         if (LeftPathLength > 0 || RightPathLength > 0)
         {
-            if (LeftPathLength >= RightPathLength)
-            {
-                StartFleeing(true, LeftDir); // Left direction hardcoded preference, adjustable for gameplay reasons
-            }
-            else
-            {
-                StartFleeing(true, RightDir);
-            }
+            EFaceDirection ChosenDir = (LeftPathLength >= RightPathLength) ? LeftDir : RightDir;
+            StartFleeing(true, ChosenDir);
+            return;
         }
     }
 }
@@ -185,35 +180,35 @@ EFaceDirection AGoPawnEnemyGunter::GetBestFleeDirection(int PlayerTileIndex) con
 
 FMoveIntent AGoPawnEnemyGunter::ComputeMoveIntent_Implementation() const
 {
-    FMoveIntent Intent;
-    Intent.NewDirection = Direction;
-    Intent.TargetTile = CurrTile;
+	FMoveIntent Intent;
+	Intent.NewDirection = Direction;
+	Intent.TargetTile = CurrTile;
 
-    if (!TileManager || !CurrTile || !bIsFleeing) {return Intent;} // Code beneath is only executed when Gunter is feared
+	if (!TileManager || !CurrTile || !bIsFleeing) {return Intent;}
 
-    FIntPoint GunterCoord = TileManager->Get2DIndex(CurrTile->Index);
-    FIntPoint TargetCoord = GunterCoord + GetDirectionDelta(FleeDirection);
+	FIntPoint GunterCoord = TileManager->Get2DIndex(CurrTile->Index);
+	FIntPoint TargetCoord = GunterCoord + GetDirectionDelta(FleeDirection);
     
-    // Check if Gunter can move forward
-    if (TileManager->IsValidIndex(TargetCoord.X, TargetCoord.Y))
-    {
-        int TargetIndex = TileManager->Get1DIndex(TargetCoord.X, TargetCoord.Y);
-        AGoTile* TargetTile = GetTileFromIndex(TargetIndex);
+	// Check if Gunter can move forward
+	if (TileManager->IsValidIndex(TargetCoord.X, TargetCoord.Y))
+	{
+		int TargetIndex = TileManager->Get1DIndex(TargetCoord.X, TargetCoord.Y);
+		AGoTile* TargetTilePtr = GetTileFromIndex(TargetIndex);
     	
-        if (TargetTile && TargetTile->Walkable && 
-            TileManager->AreConnected(CurrTile->Index, TargetIndex) &&
-            !EnemyManager->IsTileOccupied(TargetIndex, this))
-        {
-            Intent.TargetTile = TargetTile;
-            Intent.NewDirection = FleeDirection;
-            return Intent;
-        }
-    }
+		if (TargetTilePtr && TargetTilePtr->Walkable && 
+			TileManager->AreConnected(CurrTile->Index, TargetIndex) &&
+			!EnemyManager->IsTileOccupied(TargetIndex, this))
+		{
+			Intent.TargetTile = TargetTilePtr;
+			Intent.NewDirection = FleeDirection;
+			return Intent;
+		}
+	}
     
-    // Forward is blocked
-    const_cast<AGoPawnEnemyGunter*>(this)->bIsFleeing = false;
+	// Forward is blocked - stop fleeing
+	const_cast<AGoPawnEnemyGunter*>(this)->bIsFleeing = false;
     
-    return Intent;
+	return Intent;
 }
 
 void AGoPawnEnemyGunter::ApplyMoveIntent_Implementation(const FMoveIntent& Intent)
@@ -252,8 +247,7 @@ void AGoPawnEnemyGunter::ApplyDamage_Implementation(int Amount, EFaceDirection H
     }
 
     bWasHitThisTurn = true;
-    
-    // When hit with snowball, calculate flee direction for next turn
+	
     EFaceDirection PerpDir1, PerpDir2;
     switch (HitDirection)
     {
@@ -325,8 +319,7 @@ int AGoPawnEnemyGunter::CountWalkableTilesInDirection(const FIntPoint& StartCoor
         
         int NextIndex = TileManager->Get1DIndex(Next.X, Next.Y);
         AGoTile* Tile = GetTileFromIndex(NextIndex);
-
-        // Is tile suitable for movement
+    	
         if (!Tile || !Tile->Walkable || !TileManager->AreConnected(CurrentIndex, NextIndex)
         	|| NextIndex == IgnoreTileIndex || EnemyManager && EnemyManager->IsTileOccupied(NextIndex, this))
         {
