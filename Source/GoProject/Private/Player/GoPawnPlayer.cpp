@@ -22,28 +22,24 @@ void AGoPawnPlayer::BeginPlay()
     TileManager = Cast<AGoTileManager>(UGameplayStatics::GetActorOfClass(this, AGoTileManager::StaticClass()));
     if(!TileManager) 
     { 
-        UE_LOG(LogTemp, Warning, TEXT("GoPlayerPawn: Tile Manager not found")); 
         return;
     }
     
     EnemyManager = Cast<AGoEnemyManager>(UGameplayStatics::GetActorOfClass(this, AGoEnemyManager::StaticClass()));
     if(!EnemyManager) 
     { 
-        UE_LOG(LogTemp, Warning, TEXT("GoPlayerPawn: Enemy Manager not found")); 
         return;
     }
     
     TurnManager = Cast<AGoTurnManager>(UGameplayStatics::GetActorOfClass(this, AGoTurnManager::StaticClass()));
     if(!TurnManager) 
-    { 
-        UE_LOG(LogTemp, Warning, TEXT("GoPlayerPawn: Turn Manager not found")); 
+    {
         return;
     }
     
     TArray<AGoTile*> StartTiles = TileManager->GetTilesWithType(ETileType::Start);
     if(StartTiles.Num() == 0 || !IsValid(StartTiles[0])) 
-    { 
-        UE_LOG(LogTemp, Warning, TEXT("GoPlayerPawn: Start Tile not Found")); 
+    {
         return;
     }
     
@@ -139,29 +135,30 @@ TArray<AGoTile*> AGoPawnPlayer::GetValidMoveTiles() const
 
 void AGoPawnPlayer::MoveToTile(AGoTile* Tile)
 {
-    if (!GetValidMoveTiles().Contains(Tile))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Player move failed: Not a valid move tile"));
-        return;
-    }
+	if (!GetValidMoveTiles().Contains(Tile))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Player move failed: Not a valid move tile"));
+		return;
+	}
 	
-    OnMoveStart();
+	UE_LOG(LogTemp, Warning, TEXT("MoveToTile - Moving to tile %d"), Tile->Index);
 	
-    if (Tile->TileType == ETileType::Sandwich)
-    {
-        CollectSandwich();
-        Tile->TileType = ETileType::Normal;
-        Tile->UpdateDebugColors();
-    }
+	if (CurrTile == CurrentJakeTile)
+	{
+		UnregisterEntityOnJakeTile(this);
+	}
 	
-    if (CurrTile == CurrentJakeTile)
-    {
-        OnJakeTileExited();
-    }
-
-    OnMoveToTile(Tile);
-    OnMoveEnd();
-    FinishTurn();
+	if (Tile->TileType == ETileType::Sandwich)
+	{
+		CollectSandwich();
+		Tile->TileType = ETileType::Normal;
+		Tile->UpdateDebugColors();
+	}
+	
+	//StartMoveToTile(Tile, MoveDuration);
+	OnMoveToTile(Tile);
+	OnMoveEnd();
+	FinishTurn();
 }
 
 void AGoPawnPlayer::ToggleHighlightNeighbors(bool value) const
@@ -186,6 +183,38 @@ void AGoPawnPlayer::CollectSandwich()
         GameMode->AddSandwich(1);
         OnCollectSandwich();
     }
+}
+
+void AGoPawnPlayer::RegisterEntityOnJakeTile(AGoPawn* Entity)
+{
+	if (!Entity || !CurrentJakeTile) return;
+	if (Entity->CurrTile != CurrentJakeTile) return;
+    
+	EntitiesOnJakeTile.Add(Entity);
+}
+
+void AGoPawnPlayer::UnregisterEntityOnJakeTile(AGoPawn* Entity)
+{
+	if (!Entity) return;
+	EntitiesOnJakeTile.Remove(Entity);
+}
+
+void AGoPawnPlayer::CheckJakeTileRemoval()
+{
+	if (!CurrentJakeTile) return;
+	
+	TSet<AGoPawn*> EntitiesToRemove;
+	for (AGoPawn* Entity : EntitiesOnJakeTile)
+	{
+		if (!IsValid(Entity) || Entity->CurrTile != CurrentJakeTile && Entity != this) {EntitiesToRemove.Add(Entity);}
+	}
+    
+	for (AGoPawn* Entity : EntitiesToRemove)
+	{
+		EntitiesOnJakeTile.Remove(Entity);
+	}
+	
+	if (EntitiesOnJakeTile.Num() == 0) {RemoveJakeTile();}
 }
 
 void AGoPawnPlayer::OnCollectSandwich_Implementation()
@@ -312,7 +341,6 @@ bool AGoPawnPlayer::TryPlaceJakeTile(AGoTile* TargetVoidTile)
     AGoGameModeBase* GameMode = Cast<AGoGameModeBase>(GetWorld()->GetAuthGameMode());
     if (!GameMode)
     {
-        UE_LOG(LogTemp, Error, TEXT("Cannot place Jake tile: GameMode not found"));
         ExitJakePlacementMode();
         return false;
     }
@@ -368,7 +396,9 @@ bool AGoPawnPlayer::TryPlaceJakeTile(AGoTile* TargetVoidTile)
     	
         TileManager->Tiles[TargetVoidTile->Index] = CurrentJakeTile;
         TileManager->VisualizeConnections();
-    	
+
+    	EntitiesOnJakeTile.Add(this);
+        
         OnPlaceJakeTile();
         ExitJakePlacementMode();
         FinishTurn();
@@ -377,7 +407,7 @@ bool AGoPawnPlayer::TryPlaceJakeTile(AGoTile* TargetVoidTile)
     }
 	
     UE_LOG(LogTemp, Error, TEXT("Failed to spawn Jake tile - refunding sandwich"));
-    GameMode->AddSandwich(1); // Refund the sandwich
+    GameMode->AddSandwich(1);
     ExitJakePlacementMode();
     return false;
 }
@@ -388,28 +418,21 @@ void AGoPawnPlayer::OnPlaceJakeTile_Implementation()
 
 void AGoPawnPlayer::RemoveJakeTile()
 {
-    if (!CurrentJakeTile || !OriginalVoidTile) return;
+	if (!CurrentJakeTile || !OriginalVoidTile) return;
 	
-    OriginalVoidTile->SetActorHiddenInGame(false);
-    OriginalVoidTile->SetActorEnableCollision(true);
-    int Index = CurrentJakeTile->Index;
-    TileManager->Tiles[Index] = OriginalVoidTile;
+	OriginalVoidTile->SetActorHiddenInGame(false);
+	OriginalVoidTile->SetActorEnableCollision(true);
+	int Index = CurrentJakeTile->Index;
+	TileManager->Tiles[Index] = OriginalVoidTile;
 	CurrentJakeTile->Destroy();
-    CurrentJakeTile = nullptr;
-    TileManager->VisualizeConnections();
+	CurrentJakeTile = nullptr;
+	EntitiesOnJakeTile.Empty();
+	TileManager->VisualizeConnections();
 	
-    OnRemoveJakeTile();
-    UE_LOG(LogTemp, Display, TEXT("Jake tile removed"));
+	OnRemoveJakeTile();
+	UE_LOG(LogTemp, Display, TEXT("Jake tile removed"));
 }
 
 void AGoPawnPlayer::OnRemoveJakeTile_Implementation()
 {
-}
-
-void AGoPawnPlayer::OnJakeTileExited()
-{
-    if (CurrentJakeTile)
-    {
-        RemoveJakeTile();
-    }
 }

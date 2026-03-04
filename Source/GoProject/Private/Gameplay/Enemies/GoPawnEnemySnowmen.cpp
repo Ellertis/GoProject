@@ -24,14 +24,14 @@ FMoveIntent AGoPawnEnemySnowmen::ComputeMoveIntent_Implementation() const
 	}
 
 	int TargetIndex = TileManager->Get1DIndex(TargetCoord.X, TargetCoord.Y);
-	AGoTile* TargetTile = TileManager->Tiles[TargetIndex];
-	if (!TargetTile || !TargetTile->Walkable || EnemyManager->IsTileOccupied(TargetIndex, this)) 
+	AGoTile* TargetTilePtr = TileManager->Tiles[TargetIndex];
+	if (!TargetTilePtr || !TargetTilePtr->Walkable || EnemyManager->IsTileOccupied(TargetIndex, this)) 
 	{
 		Intent.NewDirection = GetOppositeDirection(Direction);
 		return Intent;
 	}
     
-	Intent.TargetTile = TargetTile;
+	Intent.TargetTile = TargetTilePtr;
     
 	FIntPoint BeyondCoord = TargetCoord + GetDirectionDelta(Direction);
 	if (!TileManager->IsValidIndex(BeyondCoord.X, BeyondCoord.Y))

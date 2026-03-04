@@ -50,6 +50,18 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "Events")
     FOnPlayerMovement OnPlayerMovement;
 	
+	UPROPERTY(BlueprintReadOnly, Category = "Jake")
+	TSet<AGoPawn*> EntitiesOnJakeTile;
+	
+	UFUNCTION(BlueprintCallable)
+	void RegisterEntityOnJakeTile(AGoPawn* Entity);
+
+	UFUNCTION(BlueprintCallable)
+	void UnregisterEntityOnJakeTile(AGoPawn* Entity);
+
+	UFUNCTION(BlueprintCallable)
+	void CheckJakeTileRemoval();
+	
     UFUNCTION(BlueprintNativeEvent, Category = "Effects")
     void OnCollectSandwich();
     virtual void OnCollectSandwich_Implementation();

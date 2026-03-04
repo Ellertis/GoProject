@@ -44,9 +44,40 @@ public:
     
     UPROPERTY(BlueprintReadWrite, Category = "State")
     AGoTile* CurrTile;
-    
-    UPROPERTY(BlueprintReadWrite, Category = "State")
-    EFaceDirection Direction;
+
+	UPROPERTY(BlueprintReadWrite, Category = "State")
+	EFaceDirection Direction;
+	
+	UPROPERTY(BlueprintReadWrite, Category = "Movement")
+	float MoveDuration = 0.5f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	bool bIsMoving = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	AGoTile* TargetTile;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	FVector StartLocation;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	FVector TargetLocation;
+
+	UPROPERTY()
+	FTimerHandle MoveTimerHandle;
+	
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	void StartMoveToTile(AGoTile* Tile, float Duration);
+	
+	UFUNCTION()
+	void UpdateMove();
+	
+	UFUNCTION()
+	void FinishMove();
+	
+	UFUNCTION(BlueprintNativeEvent, Category = "Movement")
+	float GetJumpHeight(float Alpha);
+	virtual float GetJumpHeight_Implementation(float Alpha);
 	
     UFUNCTION(BlueprintCallable, Category = "Movement")
     virtual bool CanMoveToTile(AGoTile* Tile) const;
