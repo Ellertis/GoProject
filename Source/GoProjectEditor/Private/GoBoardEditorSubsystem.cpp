@@ -93,6 +93,28 @@ void UGoBoardEditorSubsystem::BuildConnections()
 	}
 }
 
+void UGoBoardEditorSubsystem::ClearVoidTiles()
+{
+	for (AGoTile* Tile : PreviewTiles)
+	{
+		if (!IsValid(Tile)) continue;
+		if (Tile->TileType != ETileType::Void || Tile->Connections == 0){continue;}
+
+		int VoidNeighbours = 0;
+		for (int NeighborIndex : Tile->Neighbors)
+		{
+			AGoTile* NeighborTile = PreviewTiles[NeighborIndex];
+			if (!IsValid(NeighborTile)) continue;
+			if (NeighborTile->TileType != ETileType::Void) break;
+			VoidNeighbours++;
+		}
+		if (VoidNeighbours == Tile->Neighbors.Num())
+		{
+			return;
+		}
+	}
+}
+
 bool UGoBoardEditorSubsystem::AreConnected(int TileIndA, int TileIndB) const
 {
 	const AGoTile* TileA = PreviewTiles[TileIndA];
@@ -238,43 +260,61 @@ void UGoBoardEditorSubsystem::SavePreviewToDataAsset(UBoardDataAsset* DataAsset)
 void UGoBoardEditorSubsystem::VisualizeConnections()
 {
 	if (!IsValid(TileManager) || !LinkMesh) return;
-	UE_LOG(LogTemp, Warning, TEXT("Link mesh and tile manager are valid"));
+	
+	// Clear existing links first
+	for (UStaticMeshComponent* Link : Links)
+	{
+		if (IsValid(Link)) Link->DestroyComponent();
+	}
+	Links.Empty();
+	
 	for (int i = 0; i < PreviewTiles.Num(); i++)
 	{
 		AGoTile* Tile = PreviewTiles[i];
 		if (!IsValid(Tile)) continue;
-		UE_LOG(LogTemp, Warning, TEXT("PreviewTile is valid"));
+		
+		if (Tile->TileType == ETileType::Void)
+		{
+			continue;
+		}
 		
 		for (int NeighborIndex : Tile->Neighbors)
 		{
 			if (NeighborIndex < i) continue;
 			if (!AreConnected(i, NeighborIndex)) continue;
-			UE_LOG(LogTemp, Warning, TEXT("Tile and neighbor are not connected"));
+			
 			AGoTile* NeighborTile = PreviewTiles[NeighborIndex];
 			if (!IsValid(NeighborTile)) continue;
-			UE_LOG(LogTemp, Warning, TEXT("Trying To spawn"));
+			
+			if (NeighborTile->TileType == ETileType::Void)
+			{
+				continue;
+			}
+			
 			const FVector Start = Tile->GetActorLocation();
 			const FVector End   = NeighborTile->GetActorLocation();
 			const FVector Dir   = End - Start;
 			const float Length  = Dir.Size();
 			
 			FTransform Transform;
-			Transform.SetLocation(Start + Dir * 0.5f + FVector(0,0,75));
+			Transform.SetLocation(Start + Dir * 0.5f + FVector(0, 0, 75));
 			Transform.SetRotation(FQuat::FindBetweenNormals(
 				FVector::UpVector,
 				Dir.GetSafeNormal()
 			));
+			
 			Transform.SetScale3D(FVector(0.25f, 0.25f, Length / 100.f));
-			UE_LOG(LogTemp, Warning, TEXT("Trying To spawn"));
-			FName ComponentName = MakeUniqueObjectName(TileManager, UStaticMeshComponent::StaticClass(),TEXT("Link"));
-			UStaticMeshComponent* LinkComp = NewObject<UStaticMeshComponent>(TileManager,ComponentName);
+			
+			FName ComponentName = MakeUniqueObjectName(TileManager, UStaticMeshComponent::StaticClass(), 
+				*FString::Printf(TEXT("Link_%d_%d"), i, NeighborIndex));
+				
+			UStaticMeshComponent* LinkComp = NewObject<UStaticMeshComponent>(TileManager, ComponentName);
 			LinkComp->SetupAttachment(TileManager->GetRootComponent());
 			LinkComp->RegisterComponent();
 			LinkComp->SetStaticMesh(LinkMesh);
 			LinkComp->SetWorldTransform(Transform);
 
 			Links.Add(LinkComp);
-			UE_LOG(LogTemp, Warning, TEXT("Finished spawning"));
 		}
 	}
 }

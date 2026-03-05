@@ -76,6 +76,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool Walkable = true;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<AActor> SandwichRef = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int SandwichOffset = 100;
 
 protected:
 	// Called in editor and on spawn
