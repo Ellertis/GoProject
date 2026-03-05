@@ -156,13 +156,18 @@ void AGoTileManager::VisualizeConnections()
 	{
 		AGoTile* Tile = Tiles[i];
 
+		if (Tile->TileType == ETileType::Void) {continue;}
+		
 		for (int NeighborIndex : Tile->Neighbors)
 		{
 			if (NeighborIndex < i) continue;
 			if (!AreConnected(i, NeighborIndex)) continue;
+
 			AGoTile* NeighbourTile = Tiles[NeighborIndex];
 			if (!NeighbourTile) continue;
 
+			if (NeighbourTile->TileType == ETileType::Void) {continue;}
+			
 			FVector Start = Tile->GetActorLocation(), End = NeighbourTile->GetActorLocation();
 			FVector Dir = End - Start;
 			float Length = Dir.Size();
@@ -240,6 +245,10 @@ void AGoTileManager::LoadGridFromDataAsset(UBoardDataAsset* DataAssetToLoad)
 		Tile->Connections = TileData.Connections;
 		Tile->Neighbors = TileData.Neighbors;
 		Tile->TileType = TileData.TileType;
+		
+		if (Tile->TileType == ETileType::Void) {Tile->Walkable = false;}
+		
+		Tile->Walkable = TileData.Walkable;
 		Tile->Walkable = TileData.Walkable;
 		Tile->UpdateDebugColors();
 	}

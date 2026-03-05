@@ -52,6 +52,12 @@ void AGoPawnEnemyGunter::PreTurnUpdate_Implementation()
 	
     if (ManhattanDist == 1)
     {
+    	if (!TileManager->AreConnected(CurrTile->Index, PlayerRef->CurrTile->Index))
+    	{
+    		return; // Tile between player and Gunter are not connected, no fleeing
+    	}
+
+    	
         FIntPoint Delta = GunterPos - PlayerPos;
         EFaceDirection AwayDir = GetDirectionFromDelta(Delta);
     	

@@ -48,6 +48,7 @@ public:
 	
 	void BuildNeighbors();
 	void BuildConnections();
+	void ClearVoidTiles();
 	bool AreConnected(int TileIndA, int TileIndB) const;
 	FIntPoint GetDeltaIndex(int TileAInd, int TileBInd) const;
 

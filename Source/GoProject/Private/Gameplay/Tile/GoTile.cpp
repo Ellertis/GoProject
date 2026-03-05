@@ -38,6 +38,8 @@ void AGoTile::OnConstruction(const FTransform& Transform)
 	DebugDynamicMaterial = UMaterialInstanceDynamic::Create(Material, this);
 	DebugMeshComponent->SetMaterial(0, DebugDynamicMaterial);
 
+	if (TileType == ETileType::Void) {Walkable = false;}
+	
 	UpdateDebugColors();
 }
 
@@ -45,6 +47,11 @@ void AGoTile::OnConstruction(const FTransform& Transform)
 void AGoTile::BeginPlay()
 {
 	Super::BeginPlay();
+	if (TileType == ETileType::Sandwich && SandwichRef != nullptr)
+	{
+		FVector Location = GetActorLocation() + FVector(0.0f, 0.0f, SandwichOffset);
+		GetWorld()->SpawnActor<AActor>(SandwichRef,Location,FRotator::ZeroRotator);
+	}
 }
 
 // Called every frame

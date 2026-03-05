@@ -135,24 +135,33 @@ TArray<AGoTile*> AGoPawnPlayer::GetValidMoveTiles() const
 
 void AGoPawnPlayer::MoveToTile(AGoTile* Tile)
 {
-	if (!GetValidMoveTiles().Contains(Tile))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Player move failed: Not a valid move tile"));
-		return;
-	}
+	if (!GetValidMoveTiles().Contains(Tile)) {UE_LOG(LogTemp, Warning, TEXT("Player move failed: Not a valid move tile"));return;}
 	
-	UE_LOG(LogTemp, Warning, TEXT("MoveToTile - Moving to tile %d"), Tile->Index);
-	
-	if (CurrTile == CurrentJakeTile)
-	{
-		UnregisterEntityOnJakeTile(this);
-	}
+	if (CurrTile == CurrentJakeTile) {UnregisterEntityOnJakeTile(this);}
 	
 	if (Tile->TileType == ETileType::Sandwich)
 	{
 		CollectSandwich();
 		Tile->TileType = ETileType::Normal;
 		Tile->UpdateDebugColors();
+	}
+	
+	if (CurrTile && TileManager)
+	{
+		FIntPoint CurrentPos = TileManager->Get2DIndex(CurrTile->Index);
+		FIntPoint TargetPos = TileManager->Get2DIndex(Tile->Index);
+		FIntPoint Delta = TargetPos - CurrentPos;
+		Direction = GetDirectionFromDelta(Delta);
+		
+		FRotator NewRotation = FRotator::ZeroRotator;
+		switch (Direction)
+		{
+			case EFaceDirection::Xplus:  NewRotation = FRotator(0, 0, 0); break;
+			case EFaceDirection::Xminus: NewRotation = FRotator(0, 180, 0); break;
+			case EFaceDirection::Yplus:  NewRotation = FRotator(0, 90, 0); break;
+			case EFaceDirection::Yminus: NewRotation = FRotator(0, -90, 0); break;
+		}
+		SetActorRotation(NewRotation);
 	}
 	
 	//StartMoveToTile(Tile, MoveDuration);
