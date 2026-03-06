@@ -320,6 +320,8 @@ void AGoEnemyManager::EndTurn()
 {
 	bWaitingToEndTurn = false;
 	bIsProcessingTurn = false;
+
+    UpdateOccupancy();
 	
 	if (PlayerRef)
 	{

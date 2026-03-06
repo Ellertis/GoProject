@@ -52,6 +52,9 @@ public:
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Jake")
 	TSet<AGoPawn*> EntitiesOnJakeTile;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Jake")
+	bool JakeIsPlaced = false;
 	
 	UFUNCTION(BlueprintCallable)
 	void RegisterEntityOnJakeTile(AGoPawn* Entity);

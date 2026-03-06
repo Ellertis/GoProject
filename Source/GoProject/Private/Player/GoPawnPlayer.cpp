@@ -262,7 +262,8 @@ void AGoPawnPlayer::EnterJakePlacementMode()
         UE_LOG(LogTemp, Display, TEXT("Cannot enter Jake placement mode: Not player turn"));
         return;
     }
-
+	if (JakeIsPlaced) {return;}
+	
 	// If in movement mode
     if (SelectedActor == this)
     {
@@ -416,6 +417,7 @@ bool AGoPawnPlayer::TryPlaceJakeTile(AGoTile* TargetVoidTile)
         
         OnPlaceJakeTile();
         ExitJakePlacementMode();
+    	JakeIsPlaced = true;
         FinishTurn();
         
         return true;
@@ -434,6 +436,7 @@ void AGoPawnPlayer::OnPlaceJakeTile_Implementation()
 void AGoPawnPlayer::RemoveJakeTile()
 {
 	if (!CurrentJakeTile || !OriginalVoidTile) return;
+	JakeIsPlaced = false;
 	
 	OriginalVoidTile->SetActorHiddenInGame(false);
 	OriginalVoidTile->SetActorEnableCollision(true);
