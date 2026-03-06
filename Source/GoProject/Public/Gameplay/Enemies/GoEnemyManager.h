@@ -55,8 +55,23 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "State")
     bool bIsProcessingTurn;
 
+	UPROPERTY()
+	int PendingGunterMoves = 0;
+
+	UPROPERTY()
+	int PendingSnowmanMoves = 0;
+
+	UFUNCTION()
+	void OnEnemyMoveCompleted(AGoPawnEnemy* Enemy);
+	
     UFUNCTION()
     void OnNewEnemyTurn(const ETurnPhase NewTurnPhase);
+
+	UFUNCTION()
+	void SnowmanPhase(TArray<AGoPawnEnemySnowmen*>& Snowmen);
+
+	UFUNCTION()
+	void FinishEnemyTurn();
     
     UFUNCTION()
     void RemoveEnemyFromList(AGoPawnEnemy* EnemyRef);

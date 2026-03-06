@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Core/GoPawn.h"
+
+#include "Gameplay/Enemies/GoPawnEnemy.h"
 #include "Gameplay/Tile/GoTile.h"
 #include "Player/GoPawnPlayer.h"
 
@@ -26,8 +28,8 @@ void AGoPawn::StartMoveToTile(AGoTile* Tile, float Duration)
 	MoveDuration = Duration;
 	StartLocation = GetActorLocation();
 	TargetLocation = GetTilePosition(Tile);
-    
-	// Set the direction based on movement
+	MoveStartTime = GetWorld()->GetTimeSeconds();    
+	
 	if (CurrTile)
 	{
 		FIntPoint CurrentPos = TileManager->Get2DIndex(CurrTile->Index);
@@ -40,32 +42,28 @@ void AGoPawn::StartMoveToTile(AGoTile* Tile, float Duration)
 	
 	OnMoveStart();
 	
-	GetWorld()->GetTimerManager().SetTimer(MoveTimerHandle, this, 
-		&AGoPawn::UpdateMove, 0.016f, true);
+	GetWorld()->GetTimerManager().SetTimerForNextTick(this,&AGoPawn::UpdateMove);
 	
 }
 
 void AGoPawn::UpdateMove()
-{
-	UE_LOG(LogTemp, Display, TEXT("UpdateMove CALLED - bIsMoving=%d"), bIsMoving);
-	
+{	
 	if (!bIsMoving) return;
-	
-	float ElapsedTime = GetWorld()->GetTimerManager().GetTimerElapsed(MoveTimerHandle);
-	
+		
+	float CurrentTime = GetWorld()->GetTimeSeconds();
+	float ElapsedTime = CurrentTime - MoveStartTime;
 	float Alpha = FMath::Clamp(ElapsedTime / MoveDuration, 0.0f, 1.0f);
 	
 	FVector NewLocation = FMath::Lerp(StartLocation, TargetLocation, Alpha);
-	
 	float Height = GetJumpHeight_Implementation(Alpha);
 	NewLocation.Z += Height;
-    
 	SetActorLocation(NewLocation);
-	
-	if (Alpha >= 1.0f)
-	{
-		FinishMove();
-	}
+    
+	if (Alpha >= 1.0f) {FinishMove();}
+
+	float NextUpdateTime = FMath::Min(0.016f, MoveDuration - ElapsedTime);
+	GetWorld()->GetTimerManager().SetTimer(MoveTimerHandle, this, 
+		&AGoPawn::UpdateMove, NextUpdateTime, false);
 }
 
 void AGoPawn::FinishMove()
@@ -73,17 +71,21 @@ void AGoPawn::FinishMove()
 	if (!bIsMoving) return;
 	
 	GetWorld()->GetTimerManager().ClearTimer(MoveTimerHandle);
-	
+
 	SetActorLocation(TargetLocation);
 	CurrTile = TargetTile;
 	bIsMoving = false;
-	
+	Direction = NewDirection;
 	OnMoveEnd();
 	OnMoveToTile(TargetTile);
 	
 	if (AGoPawnPlayer* Player = Cast<AGoPawnPlayer>(this))
 	{
 		Player->FinishTurn();
+	}
+	else if (AGoPawnEnemy* Enemy = Cast<AGoPawnEnemy>(this))
+	{
+		if (EnemyManager){EnemyManager->OnEnemyMoveCompleted(Enemy);}
 	}
 }
 

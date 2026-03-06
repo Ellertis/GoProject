@@ -40,8 +40,11 @@ void AGoPawnEnemy::ApplyMoveIntent_Implementation(const FMoveIntent& Intent)
     SetActorRotation(NewRotation);
     Direction = Intent.NewDirection;
 
+	StartMoveToTile(Intent.TargetTile, MoveDuration);
+	/*
 	OnMoveToTile(Intent.TargetTile);
     OnMoveEnd();
+	 */
 }
 
 void AGoPawnEnemy::OnPostMove_Implementation()
