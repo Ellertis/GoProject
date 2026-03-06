@@ -84,7 +84,7 @@ void AGoPawnPlayer::OnClickTrigger()
     if (bIsJakePlacementMode  || bIsMoving == true) return;
     
     FHitResult HitResult;
-    PlayerController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Click), true, HitResult);
+    PlayerController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Player), true, HitResult);
     
     if (this == HitResult.GetActor())
     {

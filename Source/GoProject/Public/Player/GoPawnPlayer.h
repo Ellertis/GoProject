@@ -10,6 +10,8 @@ class AGoPlayerController;
 class UInputMappingContext;
 class UInputAction;
 
+#define ECC_Player ECollisionChannel::ECC_GameTraceChannel2
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPlayerMovement);
 
 UCLASS(Blueprintable)
