@@ -16,7 +16,8 @@ enum class ETileType : uint8
 	Normal UMETA(DisplayName = "Normal"),
 	Void UMETA(DisplayName = "Void"),
 	Sandwich UMETA(DisplayName = "Sandwich"),
-	Jake UMETA(DisplayName = "Jake")
+	Jake UMETA(DisplayName = "Jake"),
+	Nothing UMETA(DisplayName = "Nothing/UnJakeable")
 };
 
 UENUM(BlueprintType, meta=(Bitflags, UseEnumValuesAsMaskValuesInEditor="true"))

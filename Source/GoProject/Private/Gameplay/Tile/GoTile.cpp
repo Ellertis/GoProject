@@ -39,6 +39,10 @@ void AGoTile::OnConstruction(const FTransform& Transform)
 	DebugMeshComponent->SetMaterial(0, DebugDynamicMaterial);
 
 	if (TileType == ETileType::Void) {Walkable = false;}
+	if (TileType == ETileType::Nothing)
+	{
+		Walkable = false;
+	}
 	
 	UpdateDebugColors();
 }
@@ -68,9 +72,10 @@ void AGoTile::UpdateDebugColors() const
 	case ETileType::Start: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::Green);break;
 	case ETileType::End: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::Red);break;
 	case ETileType::Normal: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::White);break;
-	case ETileType::Void: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::Black);break;
+	case ETileType::Void: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::Yellow);break;
 	case ETileType::Sandwich: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::Yellow);break;
 	case ETileType::Jake: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::Blue);break;
+	case ETileType::Nothing: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::Black);break;
 	default: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::White);break;
 	}
 }

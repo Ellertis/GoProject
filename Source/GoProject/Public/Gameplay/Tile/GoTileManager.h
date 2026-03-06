@@ -41,6 +41,9 @@ public:
 	UStaticMesh* LinkMesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FVector LinkScale = FVector(1,1,1);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<UStaticMeshComponent*> Links;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

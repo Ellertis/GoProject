@@ -176,8 +176,10 @@ void AGoTileManager::VisualizeConnections()
 			FTransform LinkTransform;
 			LinkTransform.SetLocation(Start + Dir / 2 + FVector(0,0,ZOffset)); // midpoint + offset
 			//LinkTransform.SetRotation(UE::Math::TQuat<double>(FRotationMatrix::MakeFromZ(Dir).Rotator())); // alt rotation calculation method
-			LinkTransform.SetRotation(FQuat::FindBetweenNormals(FVector::UpVector, Dir.GetSafeNormal()));
-			LinkTransform.SetScale3D(FVector(0.25f, 0.25f, Length / 100));
+			//LinkTransform.SetRotation(FQuat::FindBetweenNormals(FVector::UpVector, Dir.GetSafeNormal()));
+			FRotator Rot = Dir.Rotation();
+			LinkTransform.SetRotation(Rot.Quaternion());
+			LinkTransform.SetScale3D(FVector(LinkScale.X, LinkScale.Y, Length / 100));
 			
 			FName ComponentName = MakeUniqueObjectName(this, UStaticMeshComponent::StaticClass(),TEXT("Link"));
 			UStaticMeshComponent* ConnectionComponent = NewObject<UStaticMeshComponent>(this,ComponentName);
