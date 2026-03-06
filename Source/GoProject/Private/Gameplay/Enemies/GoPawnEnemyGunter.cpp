@@ -211,7 +211,7 @@ FMoveIntent AGoPawnEnemyGunter::ComputeMoveIntent_Implementation() const
 		}
 	}
     
-	// Forward is blocked - stop fleeing
+	// Forward is blocked, stop fleeing
 	const_cast<AGoPawnEnemyGunter*>(this)->bIsFleeing = false;
     
 	return Intent;

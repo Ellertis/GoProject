@@ -63,8 +63,14 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	FVector TargetLocation;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	EFaceDirection NewDirection;
+
 	UPROPERTY()
 	FTimerHandle MoveTimerHandle;
+	
+	UPROPERTY()
+	float MoveStartTime = 0.0f;
 	
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void StartMoveToTile(AGoTile* Tile, float Duration);

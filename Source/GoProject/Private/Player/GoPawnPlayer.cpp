@@ -81,7 +81,7 @@ void AGoPawnPlayer::OnClickTrigger()
 {
     if (TurnManager->CurrentTurnPhase != ETurnPhase::PlayerTurn) return;
 	
-    if (bIsJakePlacementMode) return;
+    if (bIsJakePlacementMode  || bIsMoving == true) return;
     
     FHitResult HitResult;
     PlayerController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Click), true, HitResult);
@@ -96,7 +96,9 @@ void AGoPawnPlayer::OnClickTrigger()
 void AGoPawnPlayer::OnClickReleased()
 {
     if (TurnManager->CurrentTurnPhase != ETurnPhase::PlayerTurn) return;
-    
+
+	if ( bIsMoving == true) return;
+	
     FHitResult HitResult;
     PlayerController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Click), true, HitResult);
     
@@ -114,7 +116,9 @@ void AGoPawnPlayer::OnClickReleased()
 void AGoPawnPlayer::OnJakePlacementTriggered()
 {
     if (TurnManager->CurrentTurnPhase != ETurnPhase::PlayerTurn) return;
-    
+
+	if (bIsMoving == true) return;
+	
     ToggleJakePlacementMode();
 }
 
@@ -164,10 +168,12 @@ void AGoPawnPlayer::MoveToTile(AGoTile* Tile)
 		SetActorRotation(NewRotation);
 	}
 	
-	//StartMoveToTile(Tile, MoveDuration);
+	StartMoveToTile(Tile, MoveDuration);
+	/*
 	OnMoveToTile(Tile);
 	OnMoveEnd();
 	FinishTurn();
+	 */
 }
 
 void AGoPawnPlayer::ToggleHighlightNeighbors(bool value) const

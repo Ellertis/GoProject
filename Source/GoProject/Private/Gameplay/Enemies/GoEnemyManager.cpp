@@ -29,13 +29,44 @@ void AGoEnemyManager::Tick(float DeltaTime)
     Super::Tick(DeltaTime);
 }
 
+void AGoEnemyManager::OnEnemyMoveCompleted(AGoPawnEnemy* Enemy)
+{
+	if (!Enemy) return;
+    
+	if (Enemy->IsA(AGoPawnEnemyGunter::StaticClass()))
+	{
+		PendingGunterMoves--;
+		
+		if (PendingGunterMoves <= 0)
+		{
+			TArray<AGoPawnEnemySnowmen*> Snowmen;
+			for (AGoPawnEnemy* E : Enemies)
+			{
+				if (AGoPawnEnemySnowmen* S = Cast<AGoPawnEnemySnowmen>(E))
+				{
+					Snowmen.Add(S);
+				}
+			}
+			SnowmanPhase(Snowmen);
+		}
+	}
+	else if (Enemy->IsA(AGoPawnEnemySnowmen::StaticClass()))
+	{
+		PendingSnowmanMoves--;
+		if (PendingSnowmanMoves <= 0) {FinishEnemyTurn();}
+	}
+}
+
 void AGoEnemyManager::OnNewEnemyTurn(const ETurnPhase NewTurnPhase)
 {
     if (NewTurnPhase != ETurnPhase::EnemyTurn) return;
     
     bIsProcessingTurn = true;
     bWaitingToEndTurn = false;
-    
+
+	PendingGunterMoves = 0;
+	PendingSnowmanMoves = 0;
+	
     TArray<AGoPawnEnemySnowmen*> Snowmen;
     AGoPawnEnemyGunter* Gunter = nullptr;
 
@@ -52,39 +83,35 @@ void AGoEnemyManager::OnNewEnemyTurn(const ETurnPhase NewTurnPhase)
     if (Gunter)
     {
         FMoveIntent GunterIntent = Gunter->ComputeMoveIntent();
-        Gunter->ApplyMoveIntent(GunterIntent);
+    	if (GunterIntent.TargetTile != Gunter->CurrTile)
+    	{
+    		PendingGunterMoves++;
+    		Gunter->ApplyMoveIntent(GunterIntent);
+    	}
     }
     
     UpdateOccupancy();
-    
-    for (AGoPawnEnemySnowmen* Snowman : Snowmen)
-    {
-        FMoveIntent SnowmanIntent = Snowman->ComputeMoveIntent();
-        Snowman->ApplyMoveIntent(SnowmanIntent);
-    }
 
-    UpdateOccupancy();
-    
-    CheckSnowmanAttacks();
-    
-    for (AGoPawnEnemy* Enemy : Enemies) {Enemy->OnPostMove();}
+	if (PendingGunterMoves == 0){SnowmanPhase(Snowmen);}
+}
 
-	if (PlayerRef && PlayerRef->CurrentJakeTile)
+void AGoEnemyManager::SnowmanPhase(TArray<AGoPawnEnemySnowmen*>& Snowmen)
+{
+	PendingSnowmanMoves = 0;
+	for (AGoPawnEnemySnowmen* Snowman : Snowmen)
 	{
-		for (AGoPawnEnemy* Enemy : Enemies)
+		FMoveIntent SnowmanIntent = Snowman->ComputeMoveIntent();
+		if (SnowmanIntent.TargetTile != Snowman->CurrTile)
 		{
-			if (Enemy->CurrTile == PlayerRef->CurrentJakeTile)
-			{
-				PlayerRef->RegisterEntityOnJakeTile(Enemy);
-			}
-			else
-			{
-				PlayerRef->UnregisterEntityOnJakeTile(Enemy);
-			}
+			OccupiedTiles.Add(SnowmanIntent.TargetTile->Index, Snowman);
+			PendingSnowmanMoves++;
+			Snowman->ApplyMoveIntent(SnowmanIntent);
 		}
 	}
+    
+	UpdateOccupancy();
 	
-    TryEndTurn();
+	if (PendingSnowmanMoves == 0){FinishEnemyTurn();}
 }
 
 void AGoEnemyManager::CheckSnowmanAttacks()
@@ -210,6 +237,33 @@ void AGoEnemyManager::SpawnEnemy(FTransform Transform, TSubclassOf<AGoPawnEnemy>
     Enemies.Add(NewEnemy);
     
     OnEnemySpawned(NewEnemy);
+}
+
+void AGoEnemyManager::FinishEnemyTurn()
+{
+	CheckSnowmanAttacks();
+    
+	for (AGoPawnEnemy* Enemy : Enemies) 
+	{
+		Enemy->OnPostMove();
+	}
+    
+	if (PlayerRef && PlayerRef->CurrentJakeTile)
+	{
+		for (AGoPawnEnemy* Enemy : Enemies)
+		{
+			if (Enemy->CurrTile == PlayerRef->CurrentJakeTile)
+			{
+				PlayerRef->RegisterEntityOnJakeTile(Enemy);
+			}
+			else
+			{
+				PlayerRef->UnregisterEntityOnJakeTile(Enemy);
+			}
+		}
+	}
+    
+	TryEndTurn();
 }
 
 void AGoEnemyManager::RemoveEnemyFromList(AGoPawnEnemy* EnemyRef)
