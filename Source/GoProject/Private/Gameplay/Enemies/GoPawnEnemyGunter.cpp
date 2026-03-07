@@ -248,7 +248,7 @@ void AGoPawnEnemyGunter::ApplyDamage_Implementation(int Amount, EFaceDirection H
     {
         OnDeath();
         OnEnemyDeath.Broadcast(this);
-        Destroy();
+        //Destroy(); should be implemented in bp
         return;
     }
 

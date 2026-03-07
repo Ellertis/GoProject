@@ -285,7 +285,8 @@ void AGoEnemyManager::UpdateOccupancy()
     
     for (AGoPawnEnemy* Enemy : Enemies)
     {
-    	if (Enemy && Enemy->CurrTile) {OccupiedTiles.Add(Enemy->CurrTile->Index, Enemy);}
+	    if (Enemy && Enemy->CurrTile) {OccupiedTiles.Add(Enemy->CurrTile->Index, Enemy);}
+    	if (Enemy->IsA(AGoPawnEnemyGunter::StaticClass()) && Enemy->CurrTile->TileType == ETileType::End) {GunterEnd.Broadcast();}
     }
 }
 

@@ -13,6 +13,7 @@ class AGoPawnEnemy;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FNoRemainingEnemyTurns);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FGunterIsDead);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGunterEnd);
 
 UCLASS(Blueprintable)
 class GOPROJECT_API AGoEnemyManager : public AActor
@@ -48,6 +49,9 @@ public:
     
     UPROPERTY(BlueprintAssignable, Category = "Events")
     FGunterIsDead GunterIsDead;
+
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnGunterEnd GunterEnd;
     
     UPROPERTY(BlueprintReadWrite, Category = "State")
     bool bWaitingToEndTurn;

@@ -21,6 +21,7 @@ void AGoGameModeBase::BeginPlay()
     
     EnemyManager->NoRemainingEnemyTurns.AddDynamic(TurnManager, &AGoTurnManager::OnNoEnemyTurnsLeft);
     EnemyManager->GunterIsDead.AddDynamic(this, &AGoGameModeBase::GameOver);
+    EnemyManager->GunterEnd.AddDynamic(this, &AGoGameModeBase::GameWin);
     EnemyManager->TileManager = TM;
     
     TM->OnGridGenerated.AddDynamic(this, &AGoGameModeBase::OnGridGenerated);
@@ -32,6 +33,16 @@ void AGoGameModeBase::GameOver()
 {
     OnGameOver.Broadcast();
     // UI will be handled by Blueprint
+}
+
+void AGoGameModeBase::GameWin()
+{
+    OnGameWin.Broadcast();
+}
+
+void AGoGameModeBase::GameStart()
+{
+    OnGameStart.Broadcast();
 }
 
 void AGoGameModeBase::RestartLevel()
@@ -50,6 +61,7 @@ void AGoGameModeBase::OnGridGenerated()
     
     SpawnCamera();
     TurnManager->StartGame();
+    OnGameStart.Broadcast();
 }
 
 void AGoGameModeBase::SpawnPlayer()
