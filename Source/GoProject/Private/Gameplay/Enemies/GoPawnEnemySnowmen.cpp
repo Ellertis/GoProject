@@ -67,13 +67,6 @@ FMoveIntent AGoPawnEnemySnowmen::ComputeMoveIntent_Implementation() const
 
 void AGoPawnEnemySnowmen::ApplyMoveIntent_Implementation(const FMoveIntent& Intent)
 {
-	UE_LOG(LogTemp, Display, TEXT("Snowman APPLYING move:"));
-	UE_LOG(LogTemp, Display, TEXT("  From tile %d to %d"), 
-		CurrTile ? CurrTile->Index : -1,
-		Intent.TargetTile ? Intent.TargetTile->Index : -1);
-	UE_LOG(LogTemp, Display, TEXT("  Direction changing: %d -> %d"), 
-		(int)Direction, (int)Intent.NewDirection);
-	
 	// Store the target for the movement system
 	if (Intent.TargetTile && Intent.TargetTile != CurrTile)
 	{

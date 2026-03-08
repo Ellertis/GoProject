@@ -70,7 +70,7 @@ void AGoTile::UpdateDebugColors() const
 	case ETileType::End: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::Red);break;
 	case ETileType::Normal: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::White);break;
 	case ETileType::Void: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::Yellow);break;
-	case ETileType::Sandwich: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::Yellow);break;
+	case ETileType::Sandwich: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor(1,0.5,0,1));break;
 	case ETileType::Jake: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::Blue);break;
 	case ETileType::Nothing: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::Black);break;
 	default: DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::White);break;

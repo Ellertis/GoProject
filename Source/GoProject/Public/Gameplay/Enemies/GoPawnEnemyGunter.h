@@ -74,7 +74,7 @@ public:
 	
 	bool CanMoveToTileIndex(int TileIndex) const;
 
-	EFaceDirection GetBestFleeDirection(int PlayerTileIndex) const;
+	EFaceDirection GetBestFleeDirection() const;
 
 	int CountWalkableTilesInDirection(const FIntPoint& StartCoord, EFaceDirection Dir, int IgnoreTileIndex) const;
 

@@ -154,67 +154,88 @@ bool AGoPawnEnemyGunter::CanMoveToTileIndex(int TileIndex) const
     return true;
 }
 
-EFaceDirection AGoPawnEnemyGunter::GetBestFleeDirection(int PlayerTileIndex) const
+EFaceDirection AGoPawnEnemyGunter::GetBestFleeDirection() const
 {
-    if (!PathfindingSubsystem || !CurrTile) {return Direction;}
-    
-    TArray<int> FleePath = PathfindingSubsystem->FindFleePath(CurrTile->Index, PlayerTileIndex);
-    
-    if (FleePath.Num() > 1)
+    if (!TileManager || !CurrTile) return Direction;
+
+    FIntPoint GunterPos = TileManager->Get2DIndex(CurrTile->Index);
+    TArray<EFaceDirection> ValidDirections;
+    TArray<int> PathLengths;
+
+    // Check all four directions
+    TArray<EFaceDirection> AllDirs = {
+        EFaceDirection::Xplus,
+        EFaceDirection::Xminus,
+        EFaceDirection::Yplus,
+        EFaceDirection::Yminus
+    };
+
+    for (EFaceDirection Dir : AllDirs)
     {
-        FIntPoint CurrentPos = TileManager->Get2DIndex(CurrTile->Index);
-        FIntPoint NextPos = TileManager->Get2DIndex(FleePath[1]);
-        FIntPoint Delta = NextPos - CurrentPos;
-        return GetDirectionFromDelta(Delta);
-    }
-    
-    for (EFaceDirection PreferredDir : PreferredFleeOrder)
-    {
-        FIntPoint TargetCoord = TileManager->Get2DIndex(CurrTile->Index) + GetDirectionDelta(PreferredDir);
+        FIntPoint TargetCoord = GunterPos + GetDirectionDelta(Dir);
+
         if (TileManager->IsValidIndex(TargetCoord.X, TargetCoord.Y))
         {
             int TargetIndex = TileManager->Get1DIndex(TargetCoord.X, TargetCoord.Y);
             if (CanMoveToTileIndex(TargetIndex))
             {
-                return PreferredDir;
+                int PathLength = CountWalkableTilesInDirection(GunterPos, Dir, -1);
+                ValidDirections.Add(Dir);
+                PathLengths.Add(PathLength);
             }
         }
     }
-    
-    return Direction;
+
+    if (ValidDirections.Num() == 0) return Direction;
+    int BestIndex = 0;
+    int BestLength = PathLengths[0];
+
+    for (int i = 1; i < ValidDirections.Num(); i++)
+    {
+        if (PathLengths[i] > BestLength)
+        {
+            BestLength = PathLengths[i];
+            BestIndex = i;
+        }
+    }
+
+    return ValidDirections[BestIndex];
 }
 
 FMoveIntent AGoPawnEnemyGunter::ComputeMoveIntent_Implementation() const
 {
-	FMoveIntent Intent;
-	Intent.NewDirection = Direction;
-	Intent.TargetTile = CurrTile;
+    FMoveIntent Intent;
+    Intent.NewDirection = Direction;
+    Intent.TargetTile = CurrTile;
 
-	if (!TileManager || !CurrTile || !bIsFleeing) {return Intent;}
+    if (!TileManager || !CurrTile || !bIsFleeing) {return Intent;}
 
-	FIntPoint GunterCoord = TileManager->Get2DIndex(CurrTile->Index);
-	FIntPoint TargetCoord = GunterCoord + GetDirectionDelta(FleeDirection);
-    
-	// Check if Gunter can move forward
-	if (TileManager->IsValidIndex(TargetCoord.X, TargetCoord.Y))
-	{
-		int TargetIndex = TileManager->Get1DIndex(TargetCoord.X, TargetCoord.Y);
-		AGoTile* TargetTilePtr = GetTileFromIndex(TargetIndex);
-    	
-		if (TargetTilePtr && TargetTilePtr->Walkable && 
-			TileManager->AreConnected(CurrTile->Index, TargetIndex) &&
-			!EnemyManager->IsTileOccupied(TargetIndex, this))
-		{
-			Intent.TargetTile = TargetTilePtr;
-			Intent.NewDirection = FleeDirection;
-			return Intent;
-		}
-	}
-    
-	// Forward is blocked, stop fleeing
-	const_cast<AGoPawnEnemyGunter*>(this)->bIsFleeing = false;
-    
-	return Intent;
+    FIntPoint GunterCoord = TileManager->Get2DIndex(CurrTile->Index);
+    FIntPoint TargetCoord = GunterCoord + GetDirectionDelta(FleeDirection);
+
+    // Check if Gunter can move forward
+    if (TileManager->IsValidIndex(TargetCoord.X, TargetCoord.Y))
+    {
+        int TargetIndex = TileManager->Get1DIndex(TargetCoord.X, TargetCoord.Y);
+        AGoTile* TargetTilePtr = GetTileFromIndex(TargetIndex);
+
+        if (TargetTilePtr && TargetTilePtr->Walkable && 
+            TileManager->AreConnected(CurrTile->Index, TargetIndex) &&
+            !EnemyManager->IsTileOccupied(TargetIndex, this))
+        {
+            Intent.TargetTile = TargetTilePtr;
+            Intent.NewDirection = FleeDirection;
+            return Intent;
+        }
+    }
+
+    // Forward is blocked, stop fleeing
+    const_cast<AGoPawnEnemyGunter*>(this)->bIsFleeing = false;
+    // NEW: Find a direction to face after stopping
+    EFaceDirection NewFaceDir = GetBestFleeDirection();
+    const_cast<AGoPawnEnemyGunter*>(this)->Direction = NewFaceDir;
+    const_cast<AGoPawnEnemyGunter*>(this)->FleeDirection = NewFaceDir;
+    return Intent;
 }
 
 void AGoPawnEnemyGunter::ApplyMoveIntent_Implementation(const FMoveIntent& Intent)
