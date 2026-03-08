@@ -298,10 +298,8 @@ void UGoBoardEditorSubsystem::VisualizeConnections()
 			
 			FTransform Transform;
 			Transform.SetLocation(Start + Dir * 0.5f + FVector(0, 0, 75));
-			Transform.SetRotation(FQuat::FindBetweenNormals(
-				FVector::UpVector,
-				Dir.GetSafeNormal()
-			));
+			FRotator Rot = Dir.Rotation();
+			Transform.SetRotation(Rot.Quaternion());
 			
 			Transform.SetScale3D(FVector(0.25f, 0.25f, Length / 100.f));
 			

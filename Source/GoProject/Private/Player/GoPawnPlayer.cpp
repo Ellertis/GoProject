@@ -306,6 +306,7 @@ void AGoPawnPlayer::UpdateJakePlacementHighlights()
     for (AGoTile* Tile : HighlightedJakeTiles)
     {
     	Tile->HighLightTile(true);
+    	Tile->DebugDynamicMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor(1,0.3,0,1)); //Debug highlight for jake tiles
     }
 }
 
@@ -314,6 +315,7 @@ void AGoPawnPlayer::ClearJakePlacementHighlights()
     for (AGoTile* Tile : HighlightedJakeTiles)
     {
     	Tile->HighLightTile(false);
+    	Tile->UpdateDebugColors();
     }
     HighlightedJakeTiles.Empty();
 }
