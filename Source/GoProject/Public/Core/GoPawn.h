@@ -66,6 +66,12 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	EFaceDirection NewDirection;
 
+	UPROPERTY(BlueprintReadWrite, Category = "Movement")
+	float JumpHeight = 100;
+	
+	UPROPERTY(BlueprintReadWrite, Category = "Movement")
+	float SpawnHeight = 100;
+	
 	UPROPERTY()
 	FTimerHandle MoveTimerHandle;
 	

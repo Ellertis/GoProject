@@ -11,7 +11,9 @@
 #include "Player/GoCameraActor.h"
 #include "GoGameModeBase.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameWin);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameOver);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameStart);
 
 UCLASS()
 class GOPROJECT_API AGoGameModeBase : public AGameModeBase
@@ -23,6 +25,12 @@ public:
 
     UFUNCTION(BlueprintCallable)
     void GameOver();
+
+    UFUNCTION(BlueprintCallable)
+    void GameWin();
+
+    UFUNCTION(BlueprintCallable)
+    void GameStart();
 
     UFUNCTION(BlueprintCallable)
     AGoPawnPlayer* GetPlayer() const { return PlayerPawn; }
@@ -40,7 +48,14 @@ public:
     bool UseSandwich() { if (SandwichCount > 0) { SandwichCount--; return true; } return false; }
 	
     UPROPERTY(BlueprintAssignable)
+    FOnGameWin OnGameWin;
+    
+    UPROPERTY(BlueprintAssignable)
     FOnGameOver OnGameOver;
+
+    UPROPERTY(BlueprintAssignable)
+    FOnGameStart OnGameStart;
+    
 
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Managers")

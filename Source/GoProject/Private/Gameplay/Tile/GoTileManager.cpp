@@ -247,11 +247,8 @@ void AGoTileManager::LoadGridFromDataAsset(UBoardDataAsset* DataAssetToLoad)
 		Tile->Connections = TileData.Connections;
 		Tile->Neighbors = TileData.Neighbors;
 		Tile->TileType = TileData.TileType;
-		
+		Tile->Walkable = TileData.Walkable;
 		if (Tile->TileType == ETileType::Void) {Tile->Walkable = false;}
-		
-		Tile->Walkable = TileData.Walkable;
-		Tile->Walkable = TileData.Walkable;
 		Tile->UpdateDebugColors();
 	}
 	

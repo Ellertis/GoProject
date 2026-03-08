@@ -21,6 +21,7 @@ void AGoGameModeBase::BeginPlay()
     
     EnemyManager->NoRemainingEnemyTurns.AddDynamic(TurnManager, &AGoTurnManager::OnNoEnemyTurnsLeft);
     EnemyManager->GunterIsDead.AddDynamic(this, &AGoGameModeBase::GameOver);
+    EnemyManager->GunterEnd.AddDynamic(this, &AGoGameModeBase::GameWin);
     EnemyManager->TileManager = TM;
     
     TM->OnGridGenerated.AddDynamic(this, &AGoGameModeBase::OnGridGenerated);
@@ -34,15 +35,23 @@ void AGoGameModeBase::GameOver()
     // UI will be handled by Blueprint
 }
 
+void AGoGameModeBase::GameWin()
+{
+    OnGameWin.Broadcast();
+}
+
+void AGoGameModeBase::GameStart()
+{
+    OnGameStart.Broadcast();
+}
+
 void AGoGameModeBase::RestartLevel()
 {
     UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()));
 }
 
 void AGoGameModeBase::OnGridGenerated()
-{
-    UE_LOG(LogTemp, Display, TEXT("GoGameModeBase: GridGeneration started"));
-    
+{   
     SpawnPlayer();
     PlayerPawn->TurnManager = TurnManager;
     PlayerPawn->OnPlayerMovement.AddDynamic(TurnManager, &AGoTurnManager::PlayerMoved);
@@ -50,6 +59,7 @@ void AGoGameModeBase::OnGridGenerated()
     
     SpawnCamera();
     TurnManager->StartGame();
+    OnGameStart.Broadcast();
 }
 
 void AGoGameModeBase::SpawnPlayer()
@@ -74,7 +84,7 @@ void AGoGameModeBase::SpawnPlayer()
 
 void AGoGameModeBase::SpawnCamera()
 {
-    if (!CameraActorClass) {UE_LOG(LogTemp, Error, TEXT("GoGameModeBase: CameraActorClass is null!"));return;}
+    if (!CameraActorClass) {UE_LOG(LogTemp, Error, TEXT("GoGameModeBase: CameraActorClass is null"));return;}
 
     APlayerStart* PlayerStart = Cast<APlayerStart>(
         UGameplayStatics::GetActorOfClass(GetWorld(), APlayerStart::StaticClass()));
