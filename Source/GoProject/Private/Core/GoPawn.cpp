@@ -30,7 +30,7 @@ void AGoPawn::StartMoveToTile(AGoTile* Tile, float Duration)
 	TargetLocation = GetTilePosition(Tile);
 	MoveStartTime = GetWorld()->GetTimeSeconds();    
 	
-	if (CurrTile)
+	if (CurrTile && Cast<AGoPawnPlayer>(this))
 	{
 		FIntPoint CurrentPos = TileManager->Get2DIndex(CurrTile->Index);
 		FIntPoint TargetPos = TileManager->Get2DIndex(Tile->Index);
