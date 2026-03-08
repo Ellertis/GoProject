@@ -39,10 +39,7 @@ void AGoTile::OnConstruction(const FTransform& Transform)
 	DebugMeshComponent->SetMaterial(0, DebugDynamicMaterial);
 
 	if (TileType == ETileType::Void) {Walkable = false;}
-	if (TileType == ETileType::Nothing)
-	{
-		Walkable = false;
-	}
+	if (TileType == ETileType::Nothing) {Walkable = false;}
 	
 	UpdateDebugColors();
 }

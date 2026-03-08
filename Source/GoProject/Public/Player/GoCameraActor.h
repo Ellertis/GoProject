@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "CineCameraComponent.h"
 #include "GameFramework/Actor.h"
 #include "GoCameraActor.generated.h"
 
@@ -20,8 +21,8 @@ public:
 	UCameraComponent* CameraComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UCineCameraComponent* CineCameraComponent;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	USceneComponent* SceneComponent;
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "Camera")
-	void OnCameraFocus(AGoTile* FocusTile);
 };

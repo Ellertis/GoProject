@@ -48,13 +48,13 @@ public:
     bool UseSandwich() { if (SandwichCount > 0) { SandwichCount--; return true; } return false; }
 	
     UPROPERTY(BlueprintAssignable)
-    FOnGameOver OnGameWin;
+    FOnGameWin OnGameWin;
     
     UPROPERTY(BlueprintAssignable)
     FOnGameOver OnGameOver;
 
     UPROPERTY(BlueprintAssignable)
-    FOnGameOver OnGameStart;
+    FOnGameStart OnGameStart;
     
 
 protected:

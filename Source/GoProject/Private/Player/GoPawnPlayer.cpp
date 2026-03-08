@@ -305,7 +305,7 @@ void AGoPawnPlayer::UpdateJakePlacementHighlights()
     
     for (AGoTile* Tile : HighlightedJakeTiles)
     {
-    	Tile->HighLightTile(true); 
+    	Tile->HighLightTile(true);
     }
 }
 

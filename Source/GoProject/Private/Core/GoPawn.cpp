@@ -91,9 +91,8 @@ void AGoPawn::FinishMove()
 
 float AGoPawn::GetJumpHeight_Implementation(float Alpha)
 {
-	// Parabolic curve: 4 * Alpha * (1 - Alpha) peaks at 0.5
-	// Returns height offset at this point in the movement
-	return 100.0f * 4.0f * Alpha * (1.0f - Alpha);
+	// Parabolic curve
+	return JumpHeight * 4.0f * Alpha * (1.0f - Alpha);
 }
 
 bool AGoPawn::CanMoveToTile(AGoTile* Tile) const

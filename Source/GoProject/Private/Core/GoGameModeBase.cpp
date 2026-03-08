@@ -51,9 +51,7 @@ void AGoGameModeBase::RestartLevel()
 }
 
 void AGoGameModeBase::OnGridGenerated()
-{
-    UE_LOG(LogTemp, Display, TEXT("GoGameModeBase: GridGeneration started"));
-    
+{   
     SpawnPlayer();
     PlayerPawn->TurnManager = TurnManager;
     PlayerPawn->OnPlayerMovement.AddDynamic(TurnManager, &AGoTurnManager::PlayerMoved);
@@ -86,7 +84,7 @@ void AGoGameModeBase::SpawnPlayer()
 
 void AGoGameModeBase::SpawnCamera()
 {
-    if (!CameraActorClass) {UE_LOG(LogTemp, Error, TEXT("GoGameModeBase: CameraActorClass is null!"));return;}
+    if (!CameraActorClass) {UE_LOG(LogTemp, Error, TEXT("GoGameModeBase: CameraActorClass is null"));return;}
 
     APlayerStart* PlayerStart = Cast<APlayerStart>(
         UGameplayStatics::GetActorOfClass(GetWorld(), APlayerStart::StaticClass()));

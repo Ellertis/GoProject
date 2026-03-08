@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "GoEnemyManager.generated.h"
 
+enum class ETurnPhase : uint8;
 class AGoSnowball;
 class AGoTileManager;
 class AGoPawnPlayer;
