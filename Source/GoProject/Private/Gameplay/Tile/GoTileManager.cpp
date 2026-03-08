@@ -168,7 +168,7 @@ void AGoTileManager::VisualizeConnections()
 
 			if (NeighbourTile->TileType == ETileType::Void) {continue;}
 			
-			FVector Start = Tile->GetActorLocation(), End = NeighbourTile->GetActorLocation();
+			FVector Start = Tile->GetActorLocation()+LinkOffset, End = NeighbourTile->GetActorLocation()+LinkOffset;
 			FVector Dir = End - Start;
 			float Length = Dir.Size();
 
