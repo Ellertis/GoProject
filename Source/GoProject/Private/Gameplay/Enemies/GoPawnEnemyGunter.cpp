@@ -13,7 +13,8 @@ AGoPawnEnemyGunter::AGoPawnEnemyGunter()
     Health = StartHealth;
     bIsFleeing = false;
     bWasHitThisTurn = false;
-    FleeAttempts = 0;
+
+    MovementStyle = Slide;
     
     PreferredFleeOrder = {
         EFaceDirection::Xplus,
@@ -231,10 +232,6 @@ FMoveIntent AGoPawnEnemyGunter::ComputeMoveIntent_Implementation() const
 
     // Forward is blocked, stop fleeing
     const_cast<AGoPawnEnemyGunter*>(this)->bIsFleeing = false;
-    // NEW: Find a direction to face after stopping
-    EFaceDirection NewFaceDir = GetBestFleeDirection();
-    const_cast<AGoPawnEnemyGunter*>(this)->Direction = NewFaceDir;
-    const_cast<AGoPawnEnemyGunter*>(this)->FleeDirection = NewFaceDir;
     return Intent;
 }
 
@@ -246,19 +243,7 @@ void AGoPawnEnemyGunter::ApplyMoveIntent_Implementation(const FMoveIntent& Inten
 
 void AGoPawnEnemyGunter::OnPostMove_Implementation()
 {
-    if (bIsFleeing && CurrTile == PrevTile)
-    {
-        FleeAttempts++;
-        if (FleeAttempts >= MaxFleeAttempts)
-        {
-            bIsFleeing = false;
-            FleeAttempts = 0;
-        }
-    }
-    else
-    {
-        FleeAttempts = 0;
-    }
+    if (bIsFleeing && CurrTile == PrevTile){bIsFleeing = false;}
 }
 
 void AGoPawnEnemyGunter::ApplyDamage_Implementation(int Amount, EFaceDirection HitDirection)
@@ -296,7 +281,7 @@ void AGoPawnEnemyGunter::ApplyDamage_Implementation(int Amount, EFaceDirection H
 	
     EFaceDirection FleeDir;
 
-	//Pathfind best route to escape from snowballs and the player
+	//Pathfind route to escape from snowballs and the player
     if (PathfindingSubsystem && PlayerRef && PlayerRef->CurrTile)
     {
         TArray<int> Path1 = PathfindingSubsystem->FindDirectionalFleePath(
@@ -308,7 +293,7 @@ void AGoPawnEnemyGunter::ApplyDamage_Implementation(int Amount, EFaceDirection H
     }
     else
     {
-        // Fallback to simple direction choice
+        // Fallback to direction choice
         FIntPoint GunterPos = TileManager->Get2DIndex(CurrTile->Index);
         int LeftCount = CountWalkableTilesInDirection(GunterPos, PerpDir1, PlayerRef->CurrTile->Index);
         int RightCount = CountWalkableTilesInDirection(GunterPos, PerpDir2, PlayerRef->CurrTile->Index);
@@ -329,7 +314,6 @@ void AGoPawnEnemyGunter::StartFleeing(bool bSetDirection, EFaceDirection AwayDir
         Direction = AwayDir;
         FleeDirection = AwayDir;
     }
-    FleeAttempts = 0;
 }
 
 int AGoPawnEnemyGunter::CountWalkableTilesInDirection(const FIntPoint& StartCoord, EFaceDirection Dir, int IgnoreTileIndex) const

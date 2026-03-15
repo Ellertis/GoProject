@@ -33,9 +33,6 @@ public:
     
     UPROPERTY(BlueprintReadWrite, Category = "State")
     bool bWasHitThisTurn;
-    
-    UPROPERTY(BlueprintReadWrite, Category = "State")
-    int FleeAttempts;
 
     UPROPERTY(BlueprintReadWrite, Category = "State")
     EFaceDirection PostHitDirection;
@@ -45,8 +42,6 @@ public:
 
     UPROPERTY(BlueprintReadWrite, Category = "State")
     EFaceDirection FleeDirection;
-
-    int MaxFleeAttempts = 1;
 
     virtual void PreTurnUpdate_Implementation() override;
     virtual FMoveIntent ComputeMoveIntent_Implementation() const override;

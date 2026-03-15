@@ -55,8 +55,13 @@ void AGoPawn::UpdateMove()
 	float Alpha = FMath::Clamp(ElapsedTime / MoveDuration, 0.0f, 1.0f);
 	
 	FVector NewLocation = FMath::Lerp(StartLocation, TargetLocation, Alpha);
-	float Height = GetJumpHeight_Implementation(Alpha);
-	NewLocation.Z += Height;
+
+	if(MovementStyle == Jump)
+	{
+		float Height = GetJumpHeight_Implementation(Alpha);
+		NewLocation.Z += Height;	
+	}
+	
 	SetActorLocation(NewLocation);
     
 	if (Alpha >= 1.0f) {FinishMove();}

@@ -22,6 +22,13 @@ struct FMoveIntent
     EFaceDirection NewDirection = EFaceDirection::Xplus;
 };
 
+UENUM(BlueprintType)
+enum EMovementStyle
+{
+	Jump UMETA(DisplayName = "Jump"),
+	Slide UMETA(DisplayName = "Slide")
+};
+
 UCLASS(Blueprintable)
 class GOPROJECT_API AGoPawn : public APawn
 {
@@ -71,6 +78,9 @@ public:
 	
 	UPROPERTY(BlueprintReadWrite, Category = "Movement")
 	float SpawnHeight = 100;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Movement")
+	TEnumAsByte<EMovementStyle> MovementStyle = Jump;
 	
 	UPROPERTY()
 	FTimerHandle MoveTimerHandle;
