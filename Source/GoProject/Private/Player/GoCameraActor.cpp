@@ -9,10 +9,11 @@ AGoCameraActor::AGoCameraActor()
 
     SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComponent"));
     RootComponent = SceneComponent;
-    /* old camera | legacy code
+    
     CameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("CameraComponent"));
     CameraComponent->SetupAttachment(RootComponent);
-    */
+    /* old camera | legacy code
     CineCameraComponent = CreateDefaultSubobject<UCineCameraComponent>(TEXT("CineCameraComponent"));
     CineCameraComponent->SetupAttachment(RootComponent);
+    */
 }
