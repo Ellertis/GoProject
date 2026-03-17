@@ -57,11 +57,19 @@ void AGoPawnEnemyGunter::PreTurnUpdate_Implementation()
     	{
     		return; // Tile between player and Gunter are not connected, no fleeing
     	}
-
-    	
+        
+        if (!bIsFleeing)
+        {
+            FIntPoint Delta = GunterPos - PlayerPos;
+            EFaceDirection AwayDir = GetDirectionFromDelta(Delta);
+            PendingFleeDirection = AwayDir;
+            if(EnemyManager){EnemyManager->bIsGunterPlayingFearAnimation = true;}
+            PlayFearAnimation();
+        }
+        
         FIntPoint Delta = GunterPos - PlayerPos;
         EFaceDirection AwayDir = GetDirectionFromDelta(Delta);
-    	
+        
         // Try to flee directly away from player
         FIntPoint TargetCoord = GunterPos + GetDirectionDelta(AwayDir);
         
@@ -244,6 +252,36 @@ void AGoPawnEnemyGunter::ApplyMoveIntent_Implementation(const FMoveIntent& Inten
 void AGoPawnEnemyGunter::OnPostMove_Implementation()
 {
     if (bIsFleeing && CurrTile == PrevTile){bIsFleeing = false;}
+
+    /* WIP 
+    // Guessing the best pathfinding flee direction 
+    EFaceDirection ResultDir = Direction;
+    if (PathfindingSubsystem && PlayerRef)
+    {
+        TArray<int> XplusPath = PathfindingSubsystem->FindDirectionalFleePath(
+            CurrTile->Index, EFaceDirection::Xplus, PlayerRef->CurrTile->Index);
+        TArray<int> XminusPath = PathfindingSubsystem->FindDirectionalFleePath(
+            CurrTile->Index, EFaceDirection::Xminus, PlayerRef->CurrTile->Index);
+        TArray<int> YplusPath = PathfindingSubsystem->FindDirectionalFleePath(
+            CurrTile->Index, EFaceDirection::Yplus, PlayerRef->CurrTile->Index);
+        TArray<int> YminusPath = PathfindingSubsystem->FindDirectionalFleePath(
+            CurrTile->Index, EFaceDirection::Yminus, PlayerRef->CurrTile->Index);
+        TArray<int> PathLengths = {XplusPath.Num(), YplusPath.Num(), XminusPath.Num(), YminusPath.Num()};
+        int LongestPathLength = FMath::Max(PathLengths);
+        TArray<EFaceDirection> Directions = {EFaceDirection::Xplus, EFaceDirection::Xminus, EFaceDirection::Yplus, EFaceDirection::Yminus};
+        for(int i = 0; i < 3; i++){if(LongestPathLength == PathLengths[i]) ResultDir = Directions[i];}
+    }
+    switch (ResultDir)
+    */
+    FRotator NewRotation = FRotator::ZeroRotator;
+    switch (GetBestFleeDirection())
+    {
+        case EFaceDirection::Xplus:  NewRotation = FRotator(0, 0, 0); break;
+        case EFaceDirection::Xminus: NewRotation = FRotator(0, 180, 0); break;
+        case EFaceDirection::Yplus:  NewRotation = FRotator(0, 90, 0); break;
+        case EFaceDirection::Yminus: NewRotation = FRotator(0, -90, 0); break;
+    }
+    SetActorRotation(NewRotation);
 }
 
 void AGoPawnEnemyGunter::ApplyDamage_Implementation(int Amount, EFaceDirection HitDirection)
@@ -314,6 +352,17 @@ void AGoPawnEnemyGunter::StartFleeing(bool bSetDirection, EFaceDirection AwayDir
         Direction = AwayDir;
         FleeDirection = AwayDir;
     }
+}
+
+void AGoPawnEnemyGunter::OnFearAnimationComplete()
+{
+    if(EnemyManager){EnemyManager->OnGunterFearAnimationComplete();}
+    StartFleeing(true, PendingFleeDirection);
+}
+
+void AGoPawnEnemyGunter::PlayFearAnimation_Implementation()
+{
+    //Blueprint implementation
 }
 
 int AGoPawnEnemyGunter::CountWalkableTilesInDirection(const FIntPoint& StartCoord, EFaceDirection Dir, int IgnoreTileIndex) const

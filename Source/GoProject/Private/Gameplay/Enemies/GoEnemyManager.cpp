@@ -29,6 +29,22 @@ void AGoEnemyManager::Tick(float DeltaTime)
     Super::Tick(DeltaTime);
 }
 
+void AGoEnemyManager::OnGunterFearAnimationComplete()
+{
+	bIsGunterPlayingFearAnimation = false;
+	
+	TArray<AGoPawnEnemySnowmen*> Snowmen;
+	for (AGoPawnEnemy* Enemy : Enemies)
+	{
+		if (AGoPawnEnemySnowmen* Snowman = Cast<AGoPawnEnemySnowmen>(Enemy))
+		{
+			Snowmen.Add(Snowman);
+		}
+	}
+	
+	GunterPhase(CurrentGunter, Snowmen);
+}
+
 void AGoEnemyManager::OnEnemyMoveCompleted(AGoPawnEnemy* Enemy)
 {
 	if (!Enemy) return;
@@ -63,7 +79,8 @@ void AGoEnemyManager::OnNewEnemyTurn(const ETurnPhase NewTurnPhase)
     
     bIsProcessingTurn = true;
     bWaitingToEndTurn = false;
-
+	bIsGunterPlayingFearAnimation = false;
+	CurrentGunter = nullptr;
 	PendingGunterMoves = 0;
 	PendingSnowmanMoves = 0;
 	
@@ -75,24 +92,19 @@ void AGoEnemyManager::OnNewEnemyTurn(const ETurnPhase NewTurnPhase)
         if (AGoPawnEnemySnowmen* Snowman = Cast<AGoPawnEnemySnowmen>(Enemy)) {Snowmen.Add(Snowman);}
         else if (AGoPawnEnemyGunter* G = Cast<AGoPawnEnemyGunter>(Enemy)) {Gunter = G;}
     }
-    
+
+	CurrentGunter = Gunter;
+	
     for (AGoPawnEnemy* Enemy : Enemies) {Enemy->PreTurnUpdate();}
 
     UpdateOccupancy();
-    
-    if (Gunter)
-    {
-        FMoveIntent GunterIntent = Gunter->ComputeMoveIntent();
-    	if (GunterIntent.TargetTile != Gunter->CurrTile)
-    	{
-    		PendingGunterMoves++;
-    		Gunter->ApplyMoveIntent(GunterIntent);
-    	}
-    }
-    
-    UpdateOccupancy();
 
-	if (PendingGunterMoves == 0){SnowmanPhase(Snowmen);}
+	if(bIsGunterPlayingFearAnimation)
+	{
+		return;
+	}
+	
+	GunterPhase(Gunter,Snowmen);
 }
 
 void AGoEnemyManager::SnowmanPhase(TArray<AGoPawnEnemySnowmen*>& Snowmen)
@@ -112,6 +124,23 @@ void AGoEnemyManager::SnowmanPhase(TArray<AGoPawnEnemySnowmen*>& Snowmen)
 	UpdateOccupancy();
 	
 	if (PendingSnowmanMoves == 0){FinishEnemyTurn();}
+}
+
+void AGoEnemyManager::GunterPhase(AGoPawnEnemyGunter* Gunter, TArray<AGoPawnEnemySnowmen*>& Snowmen)
+{
+	if (Gunter)
+	{
+		FMoveIntent GunterIntent = Gunter->ComputeMoveIntent();
+		if (GunterIntent.TargetTile != Gunter->CurrTile)
+		{
+			PendingGunterMoves++;
+			Gunter->ApplyMoveIntent(GunterIntent);
+		}
+	}
+    
+	UpdateOccupancy();
+
+	if (PendingGunterMoves == 0){SnowmanPhase(Snowmen);}
 }
 
 void AGoEnemyManager::CheckSnowmanAttacks()

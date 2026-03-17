@@ -53,13 +53,13 @@ public:
     void StartFleeing(bool bSetDirection = true, EFaceDirection AwayDir = EFaceDirection::Xplus);
     
     UFUNCTION(BlueprintCallable)
-    bool IsFleeing() const { return bIsFleeing; }
-    
-    UFUNCTION(BlueprintCallable)
-    bool WasHitThisTurn() const { return bWasHitThisTurn; }
-    
-    UFUNCTION(BlueprintCallable)
     void ClearHitFlag() { bWasHitThisTurn = false; }
+
+	UFUNCTION(BlueprintNativeEvent)
+	void PlayFearAnimation();
+
+	UFUNCTION(BlueprintCallable)
+	void OnFearAnimationComplete();
 
     UPROPERTY(BlueprintReadWrite, Category = "State")
     bool bHasPendingFlee = false;

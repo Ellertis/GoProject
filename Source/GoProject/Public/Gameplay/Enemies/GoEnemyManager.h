@@ -60,6 +60,15 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "State")
     bool bIsProcessingTurn;
 
+	UPROPERTY(BlueprintReadWrite, Category = "Turn")
+	bool bIsGunterPlayingFearAnimation = false;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Turn")
+	AGoPawnEnemyGunter* CurrentGunter = nullptr;
+
+	UFUNCTION()
+	void OnGunterFearAnimationComplete();
+	
 	UPROPERTY()
 	int PendingGunterMoves = 0;
 
@@ -74,6 +83,9 @@ public:
 
 	UFUNCTION()
 	void SnowmanPhase(TArray<AGoPawnEnemySnowmen*>& Snowmen);
+
+	UFUNCTION()
+	void GunterPhase(AGoPawnEnemyGunter* Gunter, TArray<AGoPawnEnemySnowmen*>& Snowmen);
 
 	UFUNCTION()
 	void FinishEnemyTurn();
