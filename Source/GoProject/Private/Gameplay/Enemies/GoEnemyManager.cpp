@@ -49,6 +49,8 @@ void AGoEnemyManager::OnEnemyMoveCompleted(AGoPawnEnemy* Enemy)
 {
 	if (!Enemy) return;
     
+    UpdateOccupancy();
+    
 	if (Enemy->IsA(AGoPawnEnemyGunter::StaticClass()))
 	{
 		PendingGunterMoves--;

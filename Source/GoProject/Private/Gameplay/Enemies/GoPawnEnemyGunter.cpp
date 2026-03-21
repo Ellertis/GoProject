@@ -78,12 +78,8 @@ void AGoPawnEnemyGunter::PreTurnUpdate_Implementation()
             int TargetIndex = TileManager->Get1DIndex(TargetCoord.X, TargetCoord.Y);
             if (CanMoveToTileIndex(TargetIndex))
             {
-                int PathLength = CountWalkableTilesInDirection(GunterPos, AwayDir, -1);
-                if (PathLength > 0)
-                {
-                    StartFleeing(true, AwayDir);
-                    return;
-                }
+            	StartFleeing(true, AwayDir);
+            	return;
             }
         }
         
@@ -253,6 +249,26 @@ void AGoPawnEnemyGunter::OnPostMove_Implementation()
 {
     if (bIsFleeing && CurrTile == PrevTile){bIsFleeing = false;}
 
+	FIntPoint GunterCoord = TileManager->Get2DIndex(CurrTile->Index);
+	FIntPoint TargetCoord = GunterCoord + GetDirectionDelta(FleeDirection);
+
+	// Check if Gunter can move forward
+	if (TileManager->IsValidIndex(TargetCoord.X, TargetCoord.Y))
+	{
+		int TargetIndex = TileManager->Get1DIndex(TargetCoord.X, TargetCoord.Y);
+		AGoTile* TargetTilePtr = GetTileFromIndex(TargetIndex);
+
+		if (TargetTilePtr && TargetTilePtr->Walkable && 
+			TileManager->AreConnected(CurrTile->Index, TargetIndex) &&
+			!EnemyManager->IsTileOccupied(TargetIndex, this))
+		{
+			bIsFleeing = false;
+		}
+	}
+
+	// Forward is blocked, stop fleeing
+	
+	return;
     /* WIP 
     // Guessing the best pathfinding flee direction 
     EFaceDirection ResultDir = Direction;
@@ -273,6 +289,7 @@ void AGoPawnEnemyGunter::OnPostMove_Implementation()
     }
     switch (ResultDir)
     */
+	/*
     FRotator NewRotation = FRotator::ZeroRotator;
     switch (GetBestFleeDirection())
     {
@@ -282,6 +299,7 @@ void AGoPawnEnemyGunter::OnPostMove_Implementation()
         case EFaceDirection::Yminus: NewRotation = FRotator(0, -90, 0); break;
     }
     SetActorRotation(NewRotation);
+    */
 }
 
 void AGoPawnEnemyGunter::ApplyDamage_Implementation(int Amount, EFaceDirection HitDirection)
