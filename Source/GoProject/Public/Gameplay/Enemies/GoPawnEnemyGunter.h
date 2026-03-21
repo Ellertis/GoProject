@@ -30,9 +30,6 @@ public:
 
     UPROPERTY(BlueprintReadWrite, Category = "State")
     bool bIsFleeing;
-    
-    UPROPERTY(BlueprintReadWrite, Category = "State")
-    bool bWasHitThisTurn;
 
     UPROPERTY(BlueprintReadWrite, Category = "State")
     EFaceDirection PostHitDirection;
@@ -51,9 +48,6 @@ public:
 
     UFUNCTION(BlueprintCallable)
     void StartFleeing(bool bSetDirection = true, EFaceDirection AwayDir = EFaceDirection::Xplus);
-    
-    UFUNCTION(BlueprintCallable)
-    void ClearHitFlag() { bWasHitThisTurn = false; }
 
 	UFUNCTION(BlueprintNativeEvent)
 	void PlayFearAnimation();

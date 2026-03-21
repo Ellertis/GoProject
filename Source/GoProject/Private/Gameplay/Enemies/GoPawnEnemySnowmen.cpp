@@ -80,8 +80,7 @@ void AGoPawnEnemySnowmen::ApplyMoveIntent_Implementation(const FMoveIntent& Inte
 		}
 		SetActorRotation(NewRotation);
 		
-		//Direction = Intent.NewDirection;
-		NewDirection = Intent.NewDirection;
+		Direction = Intent.NewDirection;
 		
 		// Start the animated movement
 		StartMoveToTile(Intent.TargetTile, MoveDuration);

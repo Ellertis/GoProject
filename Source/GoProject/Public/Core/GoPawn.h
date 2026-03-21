@@ -69,10 +69,7 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	FVector TargetLocation;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Movement")
-	EFaceDirection NewDirection;
-
+	
 	UPROPERTY(BlueprintReadWrite, Category = "Movement")
 	float JumpHeight = 100;
 	
