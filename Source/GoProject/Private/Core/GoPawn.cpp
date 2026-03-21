@@ -80,7 +80,6 @@ void AGoPawn::FinishMove()
 	SetActorLocation(TargetLocation);
 	CurrTile = TargetTile;
 	bIsMoving = false;
-	Direction = NewDirection;
 	OnMoveEnd();
 	OnMoveToTile(TargetTile);
 	
