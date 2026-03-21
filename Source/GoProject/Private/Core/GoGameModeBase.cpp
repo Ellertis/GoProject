@@ -85,13 +85,21 @@ void AGoGameModeBase::SpawnPlayer()
 void AGoGameModeBase::SpawnCamera()
 {
     if (!CameraActorClass) {UE_LOG(LogTemp, Error, TEXT("GoGameModeBase: CameraActorClass is null"));return;}
-
+    
     APlayerStart* PlayerStart = Cast<APlayerStart>(
         UGameplayStatics::GetActorOfClass(GetWorld(), APlayerStart::StaticClass()));
     
     FVector CameraLocation = FVector::ZeroVector;
     FRotator CameraRotation = FRotator::ZeroRotator;
-    
+
+    AGoCameraActor* OnSceneCameraActor = Cast<AGoCameraActor>(UGameplayStatics::GetActorOfClass(GetWorld(), AGoCameraActor::StaticClass()));
+    if (OnSceneCameraActor)
+    {
+        CameraActor = OnSceneCameraActor;
+        PlayerController->SetViewTarget(OnSceneCameraActor);
+        return;
+    }
+
     if (PlayerStart)
     {
         CameraLocation = PlayerStart->GetActorLocation();
