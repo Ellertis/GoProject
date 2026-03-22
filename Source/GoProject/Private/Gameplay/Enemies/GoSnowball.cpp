@@ -39,21 +39,17 @@ void AGoSnowball::BeginPlay()
 void AGoSnowball::OnOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
     UPrimitiveComponent* OtherComp, int OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-    if (OtherActor == this) return;
+    if (OtherActor->IsA(AGoSnowball::StaticClass())) return;
     
     OnSnowballHit(OtherActor);
     
     if (AGoPawnPlayer* Player = Cast<AGoPawnPlayer>(OtherActor))
     {
-        AGoGameModeBase* GameMode = Cast<AGoGameModeBase>(GetWorld()->GetAuthGameMode());
-        if (GameMode)
-        {
-            GameMode->GameOver();
-        }
+        Player->OnDamageTaken();
     }
     else if (AGoPawnEnemyGunter* Gunter = Cast<AGoPawnEnemyGunter>(OtherActor))
     {
-        Gunter->ApplyDamage(1, ProjectedDirection);
+        if(Gunter->bWasHitThisTurn == false) {Gunter->ApplyDamage(1, ProjectedDirection);}
     }
     
     if (EnemyManager)

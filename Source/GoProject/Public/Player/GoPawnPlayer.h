@@ -57,6 +57,10 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Jake")
 	bool JakeIsPlaced = false;
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Hit")
+	void OnDamageTaken();
+	virtual void OnDamageTaken_Implementation();
 	
 	UFUNCTION(BlueprintCallable)
 	void RegisterEntityOnJakeTile(AGoPawn* Entity);

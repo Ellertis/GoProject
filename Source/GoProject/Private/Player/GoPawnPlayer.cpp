@@ -200,6 +200,11 @@ void AGoPawnPlayer::CollectSandwich()
     }
 }
 
+void AGoPawnPlayer::OnDamageTaken_Implementation()
+{
+	//BP implementation
+}
+
 void AGoPawnPlayer::RegisterEntityOnJakeTile(AGoPawn* Entity)
 {
 	if (!Entity || !CurrentJakeTile) return;

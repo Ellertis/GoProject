@@ -45,6 +45,22 @@ void AGoEnemyManager::OnGunterFearAnimationComplete()
 	GunterPhase(CurrentGunter, Snowmen);
 }
 
+void AGoEnemyManager::OnGunterImmediateMoveCompleted()
+{
+	UpdateOccupancy();
+
+	for (AGoPawnEnemy* Enemy : Enemies)
+	{
+		if (AGoPawnEnemyGunter* Gunter = Cast<AGoPawnEnemyGunter>(Enemy)) {Gunter->bIsFleeing = false;}
+	}
+	
+	// Check if we're waiting for turn end
+	if (bWaitingToEndTurn && ActiveSnowballs.Num() == 0)
+	{
+		EndTurn();
+	}
+}
+
 void AGoEnemyManager::OnEnemyMoveCompleted(AGoPawnEnemy* Enemy)
 {
 	if (!Enemy) return;
@@ -344,7 +360,17 @@ void AGoEnemyManager::UnregisterSnowball(AGoSnowball* Snowball)
 
 void AGoEnemyManager::TryEndTurn()
 {
-    if (ActiveSnowballs.Num() == 0) {EndTurn();}
+    if (ActiveSnowballs.Num() == 0)
+    {
+    	for (AGoPawnEnemy* Enemy : Enemies)
+    	{
+    		if (AGoPawnEnemyGunter* Gunter = Cast<AGoPawnEnemyGunter>(Enemy))
+    		{
+    			Gunter->ExecuteQueuedMove();
+    		}
+    	}
+	    EndTurn();
+    }
     else {bWaitingToEndTurn = true;}
 }
 
@@ -352,14 +378,14 @@ void AGoEnemyManager::EndTurn()
 {
 	bWaitingToEndTurn = false;
 	bIsProcessingTurn = false;
-
+	
     UpdateOccupancy();
 	
 	if (PlayerRef)
 	{
 		PlayerRef->CheckJakeTileRemoval();
 	}
-    
+	
 	NoRemainingEnemyTurns.Broadcast();
 	UE_LOG(LogTemp, Display, TEXT("Enemy turn ended"));
 }

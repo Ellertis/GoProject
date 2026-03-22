@@ -76,6 +76,9 @@ public:
 	int PendingSnowmanMoves = 0;
 
 	UFUNCTION()
+	void OnGunterImmediateMoveCompleted();
+
+	UFUNCTION()
 	void OnEnemyMoveCompleted(AGoPawnEnemy* Enemy);
 	
     UFUNCTION()
@@ -93,7 +96,7 @@ public:
     UFUNCTION()
     void RemoveEnemyFromList(AGoPawnEnemy* EnemyRef);
 
-    UFUNCTION(BlueprintCallable)
+    UFUNCTION()
     void SpawnEnemy(FTransform Transform, TSubclassOf<AGoPawnEnemy> EnemyClass, AGoTile* TileRef, EFaceDirection Direction);
     
     UFUNCTION(BlueprintCallable)

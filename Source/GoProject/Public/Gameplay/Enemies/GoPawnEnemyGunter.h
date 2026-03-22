@@ -22,6 +22,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gunter")
     int StartHealth = 3;
 
+	UPROPERTY(BlueprintReadWrite, Category = "Gunter")
+	bool bWasHitThisTurn = false;
+
     UPROPERTY(BlueprintReadWrite, Category = "References")
     AGoPawnPlayer* PlayerRef;
 
@@ -40,6 +43,12 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "State")
     EFaceDirection FleeDirection;
 
+	UPROPERTY()
+	bool bQueuedMoveFromHit = false;
+
+	UPROPERTY()
+	EFaceDirection QueuedMoveDirection;
+
     virtual void PreTurnUpdate_Implementation() override;
     virtual FMoveIntent ComputeMoveIntent_Implementation() const override;
     virtual void ApplyMoveIntent_Implementation(const FMoveIntent& Intent) override;
@@ -55,15 +64,15 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void OnFearAnimationComplete();
 
-    UPROPERTY(BlueprintReadWrite, Category = "State")
-    bool bHasPendingFlee = false;
+	void ExecuteQueuedMove();
 
-    UPROPERTY(BlueprintReadWrite, Category = "State")
-    EFaceDirection PendingFleeDirection;
+	void AdaptC
 	
 	bool CanMoveToTileIndex(int TileIndex) const;
 
 	EFaceDirection GetBestFleeDirection() const;
+
+	EFaceDirection GetBestEscapeDirection() const;
 
 	int CountWalkableTilesInDirection(const FIntPoint& StartCoord, EFaceDirection Dir, int IgnoreTileIndex) const;
 

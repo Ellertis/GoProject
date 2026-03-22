@@ -38,11 +38,7 @@ void AGoPawnEnemyGunter::PreTurnUpdate_Implementation()
     if (!TileManager || !CurrTile || !PlayerRef || !PlayerRef->CurrTile)
         return;
 
-    if (bHasPendingFlee)
-    {
-        StartFleeing(true, PendingFleeDirection);
-        bHasPendingFlee = false;
-    }
+    bWasHitThisTurn = false;
 	
     FIntPoint GunterPos = TileManager->Get2DIndex(CurrTile->Index);
     FIntPoint PlayerPos = TileManager->Get2DIndex(PlayerRef->CurrTile->Index);
@@ -209,6 +205,77 @@ EFaceDirection AGoPawnEnemyGunter::GetBestFleeDirection() const
     return ValidDirections[BestIndex];
 }
 
+EFaceDirection AGoPawnEnemyGunter::GetBestEscapeDirection() const
+{
+    if (!TileManager || !CurrTile || !PlayerRef || !PlayerRef->CurrTile) return Direction;
+    
+    FIntPoint GunterPos = TileManager->Get2DIndex(CurrTile->Index);
+    FIntPoint PlayerPos = TileManager->Get2DIndex(PlayerRef->CurrTile->Index);
+    
+    // Check all four directions
+    TArray<EFaceDirection> Directions = {
+        EFaceDirection::Xplus,
+        EFaceDirection::Xminus,
+        EFaceDirection::Yplus,
+        EFaceDirection::Yminus
+    };
+    
+    TArray<int> PathLengths;
+    TArray<float> DistancesFromPlayer;
+    
+    for (EFaceDirection Dir : Directions)
+    {
+        FIntPoint TargetCoord = GunterPos + GetDirectionDelta(Dir);
+        int PathLength = 0;
+        
+        if (TileManager->IsValidIndex(TargetCoord.X, TargetCoord.Y))
+        {
+            int TargetIndex = TileManager->Get1DIndex(TargetCoord.X, TargetCoord.Y);
+            if (CanMoveToTileIndex(TargetIndex))
+            {
+                PathLength = CountWalkableTilesInDirection(GunterPos, Dir, -1);
+                // Also calculate distance from player after moving
+                int NewDistance = FMath::Abs(TargetCoord.X - PlayerPos.X) + FMath::Abs(TargetCoord.Y - PlayerPos.Y);
+                DistancesFromPlayer.Add(NewDistance);
+            }
+            else
+            {
+                PathLength = -1;
+                DistancesFromPlayer.Add(-1);
+            }
+        }
+        else
+        {
+            PathLength = -1;
+            DistancesFromPlayer.Add(-1);
+        }
+        PathLengths.Add(PathLength);
+    }
+    
+    int BestIndex = 0;
+    float BestScore = -1;
+    
+    for (int i = 0; i < Directions.Num(); i++)
+    {
+        if (PathLengths[i] <= 0) continue;
+        
+        float Score = PathLengths[i] + (DistancesFromPlayer[i] * 0.5f);
+        
+        if (Score > BestScore)
+        {
+            BestScore = Score;
+            BestIndex = i;
+        }
+    }
+    
+    if (BestScore > 0)
+    {
+        return Directions[BestIndex];
+    }
+    
+    return Direction;
+}
+
 FMoveIntent AGoPawnEnemyGunter::ComputeMoveIntent_Implementation() const
 {
     FMoveIntent Intent;
@@ -299,7 +366,7 @@ void AGoPawnEnemyGunter::OnPostMove_Implementation()
     if(!bIsFleeing)
     {
         FRotator NewRotation = FRotator::ZeroRotator;
-        switch (GetBestFleeDirection())
+        switch (GetBestEscapeDirection())
         {
             case EFaceDirection::Xplus:  NewRotation = FRotator(0, 0, 0); break;
             case EFaceDirection::Xminus: NewRotation = FRotator(0, 180, 0); break;
@@ -314,7 +381,10 @@ void AGoPawnEnemyGunter::OnPostMove_Implementation()
 
 void AGoPawnEnemyGunter::ApplyDamage_Implementation(int Amount, EFaceDirection HitDirection)
 {
+    bWasHitThisTurn = true;
     Health -= Amount;
+
+    OnDamageTaken(Amount, HitDirection); //bp implementation
     
     if (Health <= 0)
     {
@@ -323,7 +393,17 @@ void AGoPawnEnemyGunter::ApplyDamage_Implementation(int Amount, EFaceDirection H
         //Destroy(); should be implemented in bp
         return;
     }
-	
+
+    EFaceDirection BestFleeDir = GetBestEscapeDirection();
+
+    QueuedMoveDirection = BestFleeDir;
+    bQueuedMoveFromHit = true;
+
+    if(EnemyManager){EnemyManager->bIsGunterPlayingFearAnimation = true;}
+    PlayFearAnimation();
+
+    // Legacy perpendicular check
+    /*
     EFaceDirection PerpDir1, PerpDir2;
     switch (HitDirection)
     {
@@ -364,9 +444,7 @@ void AGoPawnEnemyGunter::ApplyDamage_Implementation(int Amount, EFaceDirection H
         
         FleeDir = (LeftCount >= RightCount) ? PerpDir1 : PerpDir2;
     }
-
-    PendingFleeDirection = FleeDir;
-    bHasPendingFlee = true;
+    */
 }
 
 void AGoPawnEnemyGunter::StartFleeing(bool bSetDirection, EFaceDirection AwayDir)
@@ -383,6 +461,32 @@ void AGoPawnEnemyGunter::StartFleeing(bool bSetDirection, EFaceDirection AwayDir
 void AGoPawnEnemyGunter::OnFearAnimationComplete()
 {
     if(EnemyManager){EnemyManager->OnGunterFearAnimationComplete();}
+}
+
+void AGoPawnEnemyGunter::ExecuteQueuedMove()
+{
+    if (!bQueuedMoveFromHit) return;
+    
+    bQueuedMoveFromHit = false;
+    
+    StartFleeing(true, QueuedMoveDirection);
+    
+    FMoveIntent Intent;
+    FIntPoint GunterCoord = TileManager->Get2DIndex(CurrTile->Index);
+    FIntPoint TargetCoord = GunterCoord + GetDirectionDelta(QueuedMoveDirection);
+    
+    if (TileManager->IsValidIndex(TargetCoord.X, TargetCoord.Y))
+    {
+        int TargetIndex = TileManager->Get1DIndex(TargetCoord.X, TargetCoord.Y);
+        Intent.TargetTile = GetTileFromIndex(TargetIndex);
+        Intent.NewDirection = QueuedMoveDirection;
+        
+        if (Intent.TargetTile && Intent.TargetTile != CurrTile)
+        {
+            ApplyMoveIntent_Implementation(Intent);
+            if (EnemyManager) {EnemyManager->OnGunterImmediateMoveCompleted();}
+        }
+    }
 }
 
 void AGoPawnEnemyGunter::PlayFearAnimation_Implementation()
