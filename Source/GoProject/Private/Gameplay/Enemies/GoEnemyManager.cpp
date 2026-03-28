@@ -51,10 +51,9 @@ void AGoEnemyManager::OnGunterImmediateMoveCompleted()
 
 	for (AGoPawnEnemy* Enemy : Enemies)
 	{
-		if (AGoPawnEnemyGunter* Gunter = Cast<AGoPawnEnemyGunter>(Enemy)) {Gunter->bIsFleeing = false;}
+		if (AGoPawnEnemyGunter* Gunter = Cast<AGoPawnEnemyGunter>(Enemy)) {Gunter->bIsFleeing = false; Gunter->OnPostMove();}
 	}
 	
-	// Check if we're waiting for turn end
 	if (bWaitingToEndTurn && ActiveSnowballs.Num() == 0)
 	{
 		EndTurn();

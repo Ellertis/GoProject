@@ -38,7 +38,10 @@ public:
 	TArray<int> FindFleePath(int StartIndex, int PlayerIndex, int MaxDistance = 10);
 	
 	UFUNCTION(BlueprintCallable)
-	TArray<int> FindDirectionalFleePath(int StartIndex, EFaceDirection HitDirection, int PlayerIndex);
+	TArray<int> FindDirectionalFleePath(int StartIndex, EFaceDirection PreferredDir, int PlayerIndex, AGoEnemyManager* EnemyManager = nullptr);
+	
+	UFUNCTION(BlueprintCallable)
+	int CountReachableTilesInDirection(int StartIndex, EFaceDirection Direction, int PlayerIndex, AGoEnemyManager* EnemyManager, TArray<int>& OutReachableTiles, float& OutAvgDistance);
 
 private:
 	UPROPERTY()
@@ -46,7 +49,6 @@ private:
     
 	float Heuristic(int TileA, int TileB);
 	TArray<int> ReconstructPath(const TMap<int, int>& CameFrom, int Current);
-	bool IsTileValidForFlee(int TileIndex, int PlayerIndex, int IgnoreIndex = -1);
     
 	TMap<EFaceDirection, FIntPoint> DirectionVectors;
 };
