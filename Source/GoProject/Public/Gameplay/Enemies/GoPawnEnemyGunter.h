@@ -65,16 +65,12 @@ public:
 	void OnFearAnimationComplete();
 
 	void ExecuteQueuedMove();
-
-	void AdaptC
 	
 	bool CanMoveToTileIndex(int TileIndex) const;
 
-	EFaceDirection GetBestFleeDirection() const;
+	EFaceDirection GetBestDirectionCombined() const;
 
-	EFaceDirection GetBestEscapeDirection() const;
-
-	int CountWalkableTilesInDirection(const FIntPoint& StartCoord, EFaceDirection Dir, int IgnoreTileIndex) const;
+	int CountReachableTilesInDirection(EFaceDirection Dir, TArray<int>& OutReachableTiles, float& OutAvgDistance) const;
 
 protected:
     virtual void BeginPlay() override;

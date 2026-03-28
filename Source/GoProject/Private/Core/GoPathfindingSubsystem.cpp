@@ -35,19 +35,6 @@ float UGoPathfindingSubsystem::Heuristic(int TileA, int TileB)
     return FMath::Abs(PosA.X - PosB.X) + FMath::Abs(PosA.Y - PosB.Y);
 }
 
-bool UGoPathfindingSubsystem::IsTileValidForFlee(int TileIndex, int PlayerIndex, int IgnoreIndex)
-{
-    if (!TileManager || !TileManager->Tiles.IsValidIndex(TileIndex)) return false;
-    
-    AGoTile* Tile = TileManager->Tiles[TileIndex];
-    if (!Tile || !Tile->Walkable) return false;
-    
-    if (TileIndex == PlayerIndex) return false;
-    if (TileIndex == IgnoreIndex) return false;
-    
-    return true;
-}
-
 TArray<int> UGoPathfindingSubsystem::FindFleePath(int StartIndex, int PlayerIndex, int MaxDistance)
 {
     if (!TileManager) 
@@ -83,39 +70,62 @@ TArray<int> UGoPathfindingSubsystem::FindFleePath(int StartIndex, int PlayerInde
     return BestPath;
 }
 
-TArray<int> UGoPathfindingSubsystem::FindDirectionalFleePath(int StartIndex, EFaceDirection PreferredDir, int PlayerIndex)
+TArray<int> UGoPathfindingSubsystem::FindDirectionalFleePath(int StartIndex, EFaceDirection PreferredDir, int PlayerIndex, AGoEnemyManager* EnemyManager)
 {
     if (!TileManager) return TArray<int>();
     
-    TSet<int> ClosedSet;
+    FIntPoint StartPos = TileManager->Get2DIndex(StartIndex);
+    FIntPoint DirVec = DirectionVectors[PreferredDir];
+    FIntPoint FirstTilePos = StartPos + DirVec;
+    
+    // First, try simple direct move
+    int FirstTileIndex = -1;
+    if (TileManager->IsValidIndex(FirstTilePos.X, FirstTilePos.Y))
+    {
+        FirstTileIndex = TileManager->Get1DIndex(FirstTilePos.X, FirstTilePos.Y);
+        AGoTile* FirstTile = TileManager->Tiles[FirstTileIndex];
+        
+        if (FirstTile && FirstTile->Walkable && 
+            TileManager->AreConnected(StartIndex, FirstTileIndex) &&
+            FirstTileIndex != PlayerIndex &&
+            (!EnemyManager || !EnemyManager->IsTileOccupied(FirstTileIndex, nullptr)))
+        {
+            // Return a path with just the first move
+            TArray<int> SimplePath;
+            SimplePath.Add(StartIndex);
+            SimplePath.Add(FirstTileIndex);
+            return SimplePath;
+        }
+    }
+    
+    // A* to find the farthest reachable tile
     TMap<int, int> CameFrom;
     TMap<int, float> GScore;
-    TMap<int, float> FScore;
-    
+    TSet<int> ClosedSet;
     TArray<int> OpenSet;
     
     GScore.Add(StartIndex, 0);
-    FScore.Add(StartIndex, Heuristic(StartIndex, PlayerIndex) * -1);
     OpenSet.Add(StartIndex);
     
-    FIntPoint StartPos = TileManager->Get2DIndex(StartIndex);
-    FIntPoint DirVec = DirectionVectors[PreferredDir];
+    int BestTile = StartIndex;
+    float BestDistance = Heuristic(StartIndex, PlayerIndex);
     
     int Iterations = 0;
-    const int MaxIterations = 100;
+    const int MaxIterations = 200;
     
     while (OpenSet.Num() > 0 && Iterations < MaxIterations)
     {
         Iterations++;
         
+        // Find node with lowest GScore
         int Current = -1;
-        float LowestF = MAX_FLT;
+        float LowestG = MAX_FLT;
         for (int Index : OpenSet)
         {
-            float F = FScore.Contains(Index) ? FScore[Index] : MAX_FLT;
-            if (F < LowestF)
+            float G = GScore.Contains(Index) ? GScore[Index] : MAX_FLT;
+            if (G < LowestG)
             {
-                LowestF = F;
+                LowestG = G;
                 Current = Index;
             }
         }
@@ -125,10 +135,12 @@ TArray<int> UGoPathfindingSubsystem::FindDirectionalFleePath(int StartIndex, EFa
         OpenSet.Remove(Current);
         ClosedSet.Add(Current);
         
-        float PlayerDist = Heuristic(Current, PlayerIndex);
-        if (PlayerDist >= 5.0f)
+        float CurrentPlayerDist = Heuristic(Current, PlayerIndex);
+        
+        if (CurrentPlayerDist > BestDistance)
         {
-            return ReconstructPath(CameFrom, Current);
+            BestDistance = CurrentPlayerDist;
+            BestTile = Current;
         }
         
         AGoTile* CurrentTile = TileManager->Tiles[Current];
@@ -137,38 +149,184 @@ TArray<int> UGoPathfindingSubsystem::FindDirectionalFleePath(int StartIndex, EFa
         for (int NeighborIndex : CurrentTile->Neighbors)
         {
             if (!TileManager->AreConnected(Current, NeighborIndex)) continue;
-            if (!IsTileValidForFlee(NeighborIndex, PlayerIndex, StartIndex)) continue;
             if (ClosedSet.Contains(NeighborIndex)) continue;
             
-            FIntPoint NeighborPos = TileManager->Get2DIndex(NeighborIndex);
-            float DirectionBias = 0;
+            AGoTile* NeighborTile = TileManager->Tiles[NeighborIndex];
+            if (!NeighborTile || !NeighborTile->Walkable) continue;
+            if (NeighborIndex == PlayerIndex) continue;
+            if (EnemyManager && EnemyManager->IsTileOccupied(NeighborIndex, nullptr)) continue;
             
+            float MoveCost = 1.0f;
+            
+            FIntPoint NeighborPos = TileManager->Get2DIndex(NeighborIndex);
             FIntPoint Delta = NeighborPos - StartPos;
             if (FMath::Sign(Delta.X) == DirVec.X && FMath::Sign(Delta.Y) == DirVec.Y)
             {
-                DirectionBias = -2.0f;
+                MoveCost -= 0.5f; // Lower cost = more preferred
             }
             
-            float TentativeGScore = GScore[Current] + 1.0f + DirectionBias;
-            
-            if (!OpenSet.Contains(NeighborIndex))
+            // Penalty for moving towards player
+            float NewPlayerDist = Heuristic(NeighborIndex, PlayerIndex);
+            if (NewPlayerDist < CurrentPlayerDist)
             {
-                OpenSet.Add(NeighborIndex);
+                MoveCost += 10.0f;
             }
-            else if (TentativeGScore >= (GScore.Contains(NeighborIndex) ? GScore[NeighborIndex] : MAX_FLT))
+            
+            float TentativeGScore = GScore[Current] + MoveCost;
+            
+            if (!GScore.Contains(NeighborIndex) || TentativeGScore < GScore[NeighborIndex])
             {
-                continue;
+                CameFrom.Add(NeighborIndex, Current);
+                GScore.Add(NeighborIndex, TentativeGScore);
+                
+                if (!OpenSet.Contains(NeighborIndex))
+                {
+                    OpenSet.Add(NeighborIndex);
+                }
             }
-            
-            CameFrom.Add(NeighborIndex, Current);
-            GScore.Add(NeighborIndex, TentativeGScore);
-            
-            PlayerDist = Heuristic(NeighborIndex, PlayerIndex);
-            FScore.Add(NeighborIndex, -PlayerDist + GScore[NeighborIndex] * 0.1f);
         }
     }
     
+    // Reconstruct path to the best tile
+    if (BestTile != StartIndex && CameFrom.Contains(BestTile))
+    {
+        TArray<int> Path;
+        int Current = BestTile;
+        while (Current != StartIndex)
+        {
+            Path.Insert(Current, 0);
+            if (CameFrom.Contains(Current))
+            {
+                Current = CameFrom[Current];
+            }
+            else
+            {
+                break;
+            }
+        }
+        Path.Insert(StartIndex, 0);
+        
+        if (Path.Num() > 1)
+        {
+            return Path;
+        }
+    }
+    
+    // Fallback: return the first move if available
+    if (FirstTileIndex != -1)
+    {
+        TArray<int> SimplePath;
+        SimplePath.Add(StartIndex);
+        SimplePath.Add(FirstTileIndex);
+        return SimplePath;
+    }
+    
     return TArray<int>();
+}
+
+int UGoPathfindingSubsystem::CountReachableTilesInDirection(int StartIndex, EFaceDirection Direction, int PlayerIndex, AGoEnemyManager* EnemyManager, TArray<int>& OutReachableTiles, float& OutAvgDistance)
+{
+    if (!TileManager) 
+    {
+        if (GetWorld()){TileManager = Cast<AGoTileManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AGoTileManager::StaticClass()));}
+        if (!TileManager)
+        {
+            return 0;
+        }
+    }
+    
+    FIntPoint StartPos = TileManager->Get2DIndex(StartIndex);
+    FIntPoint PlayerPos = TileManager->Get2DIndex(PlayerIndex);
+    FIntPoint PrimaryDir;
+    switch (Direction)
+    {
+        case EFaceDirection::Xplus:  PrimaryDir = FIntPoint(1, 0); break;
+        case EFaceDirection::Xminus: PrimaryDir = FIntPoint(-1, 0); break;
+        case EFaceDirection::Yplus:  PrimaryDir = FIntPoint(0, 1); break;
+        case EFaceDirection::Yminus: PrimaryDir = FIntPoint(0, -1); break;
+        default: PrimaryDir = FIntPoint(0, 0); break;
+    }
+    
+    FIntPoint FirstTilePos = StartPos + PrimaryDir;
+    if (!TileManager->IsValidIndex(FirstTilePos.X, FirstTilePos.Y)){return 0;}
+    
+    int FirstTileIndex = TileManager->Get1DIndex(FirstTilePos.X, FirstTilePos.Y);
+    AGoTile* FirstTile = TileManager->Tiles[FirstTileIndex];
+    bool bWalkable = FirstTile && FirstTile->Walkable;
+    bool bConnected = TileManager->AreConnected(StartIndex, FirstTileIndex);
+    bool bOccupied = EnemyManager && EnemyManager->IsTileOccupied(FirstTileIndex, nullptr);
+    
+    if (!bWalkable || !bConnected || bOccupied){return 0;}
+    
+    TSet<int> Visited;
+    TArray<int> Queue;
+    
+    Visited.Add(StartIndex);
+    Queue.Add(StartIndex);
+    OutReachableTiles.Empty();
+    OutAvgDistance = 0;
+    
+    FIntPoint PerpDir1, PerpDir2;
+    if (PrimaryDir.X != 0) // Horizontal movement
+    {
+        PerpDir1 = FIntPoint(0, 1);
+        PerpDir2 = FIntPoint(0, -1);
+    }
+    else // Vertical movement
+    {
+        PerpDir1 = FIntPoint(1, 0);
+        PerpDir2 = FIntPoint(-1, 0);
+    }
+    
+    FIntPoint OppositeDir = FIntPoint(-PrimaryDir.X, -PrimaryDir.Y);
+    
+    int TileCount = 0;
+    
+    while (Queue.Num() > 0)
+    {
+        int CurrentIndex = Queue[0];
+        Queue.RemoveAt(0);
+        
+        FIntPoint CurrentPos = TileManager->Get2DIndex(CurrentIndex);
+        
+        TArray<FIntPoint> NeighborDirs = { PrimaryDir, OppositeDir, PerpDir1, PerpDir2 };
+        
+        for (const FIntPoint& DirVec : NeighborDirs)
+        {
+            FIntPoint NeighborPos = CurrentPos + DirVec;
+            
+            if (!TileManager->IsValidIndex(NeighborPos.X, NeighborPos.Y)) continue;
+            
+            int NeighborIndex = TileManager->Get1DIndex(NeighborPos.X, NeighborPos.Y);
+            
+            if (Visited.Contains(NeighborIndex)) continue;
+            
+            AGoTile* NeighborTile = TileManager->Tiles[NeighborIndex];
+            if (!NeighborTile || !NeighborTile->Walkable) {continue;}
+            if (!TileManager->AreConnected(CurrentIndex, NeighborIndex)) {continue;}
+            if (EnemyManager && EnemyManager->IsTileOccupied(NeighborIndex, nullptr)) {continue;}
+
+            FIntPoint Delta = NeighborPos - StartPos;
+            float Dot = (Delta.X * PrimaryDir.X) + (Delta.Y * PrimaryDir.Y);
+            
+            if (Dot < -0.5f) {continue;}
+            
+            Visited.Add(NeighborIndex);
+            Queue.Add(NeighborIndex);
+            
+            TileCount++;
+            OutReachableTiles.Add(NeighborIndex);
+            float PlayerDist = FMath::Abs(NeighborPos.X - PlayerPos.X) + FMath::Abs(NeighborPos.Y - PlayerPos.Y);
+            OutAvgDistance += PlayerDist;
+        }
+    }
+    
+    if (TileCount > 0)
+    {
+        OutAvgDistance /= TileCount;
+    }
+    
+    return TileCount;
 }
 
 TArray<int> UGoPathfindingSubsystem::ReconstructPath(const TMap<int, int>& CameFrom, int Current)

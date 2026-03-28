@@ -449,8 +449,10 @@ void AGoPawnPlayer::RemoveJakeTile()
 	OriginalVoidTile->SetActorEnableCollision(true);
 	int Index = CurrentJakeTile->Index;
 	TileManager->Tiles[Index] = OriginalVoidTile;
+	/* Handled in bp
 	CurrentJakeTile->Destroy();
 	CurrentJakeTile = nullptr;
+	*/
 	EntitiesOnJakeTile.Empty();
 	TileManager->VisualizeConnections();
 	
