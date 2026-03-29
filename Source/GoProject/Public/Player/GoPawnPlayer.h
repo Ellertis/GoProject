@@ -37,7 +37,7 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Jake")
     TSubclassOf<AGoTile> JakeTileClass;
     
-    UPROPERTY(BlueprintReadOnly, Category = "Jake")
+    UPROPERTY(BlueprintReadWrite, Category = "Jake")
     AGoTile* CurrentJakeTile;
     
     UPROPERTY(BlueprintReadOnly, Category = "Jake")
