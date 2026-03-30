@@ -26,9 +26,14 @@ void AGoPawnEnemy::ApplyMoveIntent_Implementation(const FMoveIntent& Intent)
 {
     if (!Intent.TargetTile) return;
     
-    OnMoveStart();
-
-	//Rotation logic starts here 
+    if(Direction != Intent.NewDirection)
+    {
+        PendingMoveTile = Intent.TargetTile;
+        StartRotationToDirection(Intent.NewDirection, RotationDuration);
+        return;
+    }
+    /*
+    //Rotation logic starts here 
     FRotator NewRotation = FRotator::ZeroRotator;
     switch (Intent.NewDirection)
     {
@@ -40,7 +45,7 @@ void AGoPawnEnemy::ApplyMoveIntent_Implementation(const FMoveIntent& Intent)
 	
     SetActorRotation(NewRotation);
     Direction = Intent.NewDirection;
-
+    */
 	StartMoveToTile(Intent.TargetTile, MoveDuration);
 	/*
 	OnMoveToTile(Intent.TargetTile);

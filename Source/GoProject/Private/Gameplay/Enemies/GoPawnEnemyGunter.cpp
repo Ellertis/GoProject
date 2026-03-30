@@ -279,15 +279,9 @@ void AGoPawnEnemyGunter::OnPostMove_Implementation()
     
     if(!bIsFleeing)
     {
-        FRotator NewRotation = FRotator::ZeroRotator;
-        switch (GetBestDirectionCombined())
-        {
-            case EFaceDirection::Xplus:  NewRotation = FRotator(0, 0, 0); break;
-            case EFaceDirection::Xminus: NewRotation = FRotator(0, 180, 0); break;
-            case EFaceDirection::Yplus:  NewRotation = FRotator(0, 90, 0); break;
-            case EFaceDirection::Yminus: NewRotation = FRotator(0, -90, 0); break;
-        }
-        SetActorRotation(NewRotation);
+        EFaceDirection NewFaceDirection = GetBestDirectionCombined();
+        PendingMoveTile = nullptr; //crucial to not trigger movement animation after rotation is finished
+        StartRotationToDirection(NewFaceDirection, RotationDuration);
     }
     
     PrevTile = CurrTile;
@@ -320,7 +314,6 @@ void AGoPawnEnemyGunter::StartFleeing(bool bSetDirection, EFaceDirection AwayDir
     
     if (bSetDirection)
     {
-        Direction = AwayDir;
         FleeDirection = AwayDir;
     }
 }

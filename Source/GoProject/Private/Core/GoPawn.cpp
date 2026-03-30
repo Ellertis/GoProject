@@ -19,6 +19,71 @@ void AGoPawn::BeginPlay()
     Super::BeginPlay();
 }
 
+void AGoPawn::StartRotationToDirection(EFaceDirection NewDirection, float Duration)
+{
+    if (bIsMoving || bIsRotating) return;
+	
+    switch (NewDirection)
+    {
+        case EFaceDirection::Xplus:  TargetRotation = FRotator(0, 0, 0); break;
+        case EFaceDirection::Xminus: TargetRotation = FRotator(0, 180, 0); break;
+        case EFaceDirection::Yplus:  TargetRotation = FRotator(0, 90, 0); break;
+        case EFaceDirection::Yminus: TargetRotation = FRotator(0, -90, 0); break;
+        default: TargetRotation = FRotator(0, 0, 0); break;
+    }
+    
+    StartRotation = GetActorRotation();
+    RotationDuration = Duration;
+    bIsRotating = true;
+    RotationStartTime = GetWorld()->GetTimeSeconds();
+
+	OnRotationStart();
+	
+    GetWorld()->GetTimerManager().SetTimerForNextTick(this, &AGoPawn::UpdateRotation);
+}
+
+void AGoPawn::UpdateRotation()
+{
+    if (!bIsRotating) return;
+    
+    float CurrentTime = GetWorld()->GetTimeSeconds();
+    float ElapsedTime = CurrentTime - RotationStartTime;
+    float Alpha = FMath::Clamp(ElapsedTime / RotationDuration, 0.0f, 1.0f);
+	
+    FRotator NewRotation = FMath::Lerp(StartRotation, TargetRotation, Alpha);
+    SetActorRotation(NewRotation);
+    
+    if (Alpha >= 1.0f){OnRotationComplete();}
+
+	float NextUpdateTime = FMath::Min(0.016f, RotationDuration - ElapsedTime);
+	GetWorld()->GetTimerManager().SetTimer(RotationTimerHandle, this, 
+		&AGoPawn::UpdateRotation, NextUpdateTime, false);
+}
+
+void AGoPawn::OnRotationComplete()
+{
+    bIsRotating = false;
+    GetWorld()->GetTimerManager().ClearTimer(RotationTimerHandle);
+	
+    SetActorRotation(TargetRotation);
+	
+    FIntPoint Delta;
+    if (FMath::IsNearlyEqual(TargetRotation.Yaw, 0.0f)) Delta = FIntPoint(1, 0);
+    else if (FMath::IsNearlyEqual(TargetRotation.Yaw, 180.0f)) Delta = FIntPoint(-1, 0);
+    else if (FMath::IsNearlyEqual(TargetRotation.Yaw, 90.0f)) Delta = FIntPoint(0, 1);
+    else if (FMath::IsNearlyEqual(TargetRotation.Yaw, -90.0f)) Delta = FIntPoint(0, -1);
+    else Delta = FIntPoint(0, 0);
+    
+    Direction = GetDirectionFromDelta(Delta);
+	OnRotationEnd();
+	
+    if (PendingMoveTile)
+    {
+        StartMoveToTile(PendingMoveTile, MoveDuration);
+        PendingMoveTile = nullptr;
+    }
+}
+
 void AGoPawn::StartMoveToTile(AGoTile* Tile, float Duration)
 {
 	
@@ -127,6 +192,16 @@ void AGoPawn::OnMoveToTile_Implementation(AGoTile* Tile)
     
     SetActorLocation(GetTilePosition(Tile));
     CurrTile = Tile;
+}
+
+void AGoPawn::OnRotationStart_Implementation()
+{
+	// Blueprint implementation
+}
+
+void AGoPawn::OnRotationEnd_Implementation()
+{
+	// Blueprint implementation
 }
 
 FIntPoint AGoPawn::GetDirectionDelta(EFaceDirection DirectionValue) const

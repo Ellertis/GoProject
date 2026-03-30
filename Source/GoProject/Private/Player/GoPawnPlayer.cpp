@@ -81,7 +81,7 @@ void AGoPawnPlayer::OnClickTrigger()
 {
     if (TurnManager->CurrentTurnPhase != ETurnPhase::PlayerTurn) return;
 	
-    if (bIsJakePlacementMode || bIsMoving == true) return;
+    if (bIsJakePlacementMode || bIsMoving == true || bIsRotating == true) return;
     
     FHitResult HitResult;
     PlayerController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Player), true, HitResult);
@@ -97,7 +97,7 @@ void AGoPawnPlayer::OnClickReleased()
 {
     if (TurnManager->CurrentTurnPhase != ETurnPhase::PlayerTurn) return;
 
-	if ( bIsMoving == true) return;
+	if ( bIsMoving == true || bIsRotating == true) return;
 	
     FHitResult HitResult;
     PlayerController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Click), true, HitResult);
@@ -155,25 +155,11 @@ void AGoPawnPlayer::MoveToTile(AGoTile* Tile)
 		FIntPoint CurrentPos = TileManager->Get2DIndex(CurrTile->Index);
 		FIntPoint TargetPos = TileManager->Get2DIndex(Tile->Index);
 		FIntPoint Delta = TargetPos - CurrentPos;
-		Direction = GetDirectionFromDelta(Delta);
-		
-		FRotator NewRotation = FRotator::ZeroRotator;
-		switch (Direction)
-		{
-			case EFaceDirection::Xplus:  NewRotation = FRotator(0, 0, 0); break;
-			case EFaceDirection::Xminus: NewRotation = FRotator(0, 180, 0); break;
-			case EFaceDirection::Yplus:  NewRotation = FRotator(0, 90, 0); break;
-			case EFaceDirection::Yminus: NewRotation = FRotator(0, -90, 0); break;
-		}
-		SetActorRotation(NewRotation);
+		EFaceDirection TargetDirection = GetDirectionFromDelta(Delta);
+		PendingMoveTile = Tile;
+		if(TargetDirection != Direction) {StartRotationToDirection(TargetDirection, RotationDuration);return;}
+		StartMoveToTile(Tile, MoveDuration);
 	}
-	
-	StartMoveToTile(Tile, MoveDuration);
-	/*
-	OnMoveToTile(Tile);
-	OnMoveEnd();
-	FinishTurn();
-	 */
 }
 
 void AGoPawnPlayer::ToggleHighlightNeighbors(bool value) const
@@ -229,10 +215,7 @@ void AGoPawnPlayer::CheckJakeTileRemoval()
 		if (!IsValid(Entity) || Entity->CurrTile != CurrentJakeTile && Entity != this) {EntitiesToRemove.Add(Entity);}
 	}
     
-	for (AGoPawn* Entity : EntitiesToRemove)
-	{
-		EntitiesOnJakeTile.Remove(Entity);
-	}
+	for (AGoPawn* Entity : EntitiesToRemove){EntitiesOnJakeTile.Remove(Entity);}
 	
 	if (EntitiesOnJakeTile.Num() == 0) {RemoveJakeTile();}
 }
@@ -243,44 +226,22 @@ void AGoPawnPlayer::OnCollectSandwich_Implementation()
 
 void AGoPawnPlayer::ToggleJakePlacementMode()
 {
-    if (bIsJakePlacementMode)
-    {
-        ExitJakePlacementMode();
-    }
-    else
-    {
-        EnterJakePlacementMode();
-    }
+    if (bIsJakePlacementMode){ExitJakePlacementMode();}
+    else{EnterJakePlacementMode();}
 }
 
 void AGoPawnPlayer::EnterJakePlacementMode()
 {
     AGoGameModeBase* GameMode = Cast<AGoGameModeBase>(GetWorld()->GetAuthGameMode());
-    if (!GameMode || GameMode->GetSandwichCount() <= 0)
-    {
-        UE_LOG(LogTemp, Display, TEXT("Cannot enter Jake placement mode: No sandwiches available"));
-        return;
-    }
+    if (!GameMode || GameMode->GetSandwichCount() <= 0){return;}
 
-    if (TurnManager->CurrentTurnPhase != ETurnPhase::PlayerTurn)
-    {
-        UE_LOG(LogTemp, Display, TEXT("Cannot enter Jake placement mode: Not player turn"));
-        return;
-    }
+    if (TurnManager->CurrentTurnPhase != ETurnPhase::PlayerTurn){return;}
 	if (JakeIsPlaced) {return;}
-	
-	// If in movement mode
-    if (SelectedActor == this)
-    {
-        ToggleHighlightNeighbors(false);
-        SelectedActor = nullptr;
-    }
+    if (SelectedActor == this){ToggleHighlightNeighbors(false);SelectedActor = nullptr;}
 
     bIsJakePlacementMode = true;
     UpdateJakePlacementHighlights();
     OnEnterJakePlacementMode();
-    
-    UE_LOG(LogTemp, Display, TEXT("Entered Jake placement mode"));
 }
 
 void AGoPawnPlayer::ExitJakePlacementMode()
@@ -330,10 +291,8 @@ TArray<AGoTile*> AGoPawnPlayer::GetValidJakePlacementTiles() const
     TArray<AGoTile*> ValidTiles;
     
     if (!TileManager || !CurrTile) return ValidTiles;
-    
-    // Collect all tiles around where Jake can be placed
+	
     TArray<AGoTile*> VoidTiles = TileManager->GetTilesWithType(ETileType::Void);
-    
     FIntPoint PlayerPos = TileManager->Get2DIndex(CurrTile->Index);
     
     for (AGoTile* VoidTile : VoidTiles)
@@ -342,8 +301,7 @@ TArray<AGoTile*> AGoPawnPlayer::GetValidJakePlacementTiles() const
         
         FIntPoint VoidPos = TileManager->Get2DIndex(VoidTile->Index);
         int Distance = FMath::Abs(PlayerPos.X - VoidPos.X) + FMath::Abs(PlayerPos.Y - VoidPos.Y);
-        
-        // Must be adjacent and connected
+    	
         if (Distance == 1 && TileManager->AreConnected(CurrTile->Index, VoidTile->Index))
         {
             ValidTiles.Add(VoidTile);
@@ -355,38 +313,18 @@ TArray<AGoTile*> AGoPawnPlayer::GetValidJakePlacementTiles() const
 
 bool AGoPawnPlayer::TryPlaceJakeTile(AGoTile* TargetVoidTile)
 {
-    if (!bIsJakePlacementMode)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Cannot place Jake tile: Not in placement mode"));
-        return false;
-    }
+    if (!bIsJakePlacementMode){return false;}
 
     AGoGameModeBase* GameMode = Cast<AGoGameModeBase>(GetWorld()->GetAuthGameMode());
-    if (!GameMode)
-    {
-        ExitJakePlacementMode();
-        return false;
-    }
+    if (!GameMode){ExitJakePlacementMode();return false;}
 	
     if (!TargetVoidTile || !IsValid(TargetVoidTile) || TargetVoidTile->TileType != ETileType::Void)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Cannot place Jake tile: Invalid target tile"));
-        return false;
-    }
+    {return false;}
 	
     TArray<AGoTile*> ValidTiles = GetValidJakePlacementTiles();
-    if (!ValidTiles.Contains(TargetVoidTile)) 
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Cannot place Jake tile: Target not adjacent or not connected"));
-        return false;
-    }
+    if (!ValidTiles.Contains(TargetVoidTile)) {return false;}
 	
-    if (!GameMode->UseSandwich())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Cannot place Jake tile: Failed to consume sandwich"));
-        ExitJakePlacementMode();
-        return false;
-    }
+    if (!GameMode->UseSandwich()){ExitJakePlacementMode();return false;}
 	
     OriginalVoidTile = TargetVoidTile;
 	
@@ -430,7 +368,6 @@ bool AGoPawnPlayer::TryPlaceJakeTile(AGoTile* TargetVoidTile)
         return true;
     }
 	
-    UE_LOG(LogTemp, Error, TEXT("Failed to spawn Jake tile - refunding sandwich"));
     GameMode->AddSandwich(1);
     ExitJakePlacementMode();
     return false;

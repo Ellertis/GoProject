@@ -54,6 +54,27 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, Category = "State")
 	EFaceDirection Direction;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Movement")
+	bool bIsRotating = false;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Movement")
+	float RotationDuration = 0.2f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	FRotator StartRotation;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	FRotator TargetRotation;
+
+	UPROPERTY()
+	FTimerHandle RotationTimerHandle;
+
+	UPROPERTY()
+	float RotationStartTime = 0.0f;
+
+	UPROPERTY()
+	AGoTile* PendingMoveTile;
 	
 	UPROPERTY(BlueprintReadWrite, Category = "Movement")
 	float MoveDuration = 0.5f;
@@ -84,6 +105,15 @@ public:
 	
 	UPROPERTY()
 	float MoveStartTime = 0.0f;
+
+	UFUNCTION(BlueprintCallable, Category = "Movement")
+	void StartRotationToDirection(EFaceDirection NewDirection, float Duration);
+
+	UFUNCTION()
+	void UpdateRotation();
+
+	UFUNCTION()
+	void OnRotationComplete();
 	
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void StartMoveToTile(AGoTile* Tile, float Duration);
@@ -115,6 +145,15 @@ public:
     UFUNCTION(BlueprintNativeEvent, Category = "Movement")
     void OnMoveToTile(AGoTile* Tile);
     virtual void OnMoveToTile_Implementation(AGoTile* Tile);
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Movement")
+	void OnRotationStart();
+	virtual void OnRotationStart_Implementation();
+    
+	UFUNCTION(BlueprintNativeEvent, Category = "Movement")
+	void OnRotationEnd();
+	virtual void OnRotationEnd_Implementation();
+
 	
     UFUNCTION(BlueprintCallable, Category = "Direction")
     FIntPoint GetDirectionDelta(EFaceDirection DirectionValue) const;
