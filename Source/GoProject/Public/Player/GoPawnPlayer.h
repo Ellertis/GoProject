@@ -34,6 +34,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
     UInputAction* JakePlacementAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	bool AssignDebugJakePlacementMode;
+
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Jake")
     TSubclassOf<AGoTile> JakeTileClass;
     
@@ -104,7 +107,7 @@ public:
     UFUNCTION()
     void OnClickReleased();
 	
-    UFUNCTION()
+    UFUNCTION(BlueprintCallable)
     void OnJakePlacementTriggered();
     
     virtual TArray<AGoTile*> GetValidMoveTiles() const override;
