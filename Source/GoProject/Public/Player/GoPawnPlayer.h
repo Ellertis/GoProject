@@ -116,7 +116,7 @@ public:
     void MoveToTile(AGoTile* Tile);
     
     void ToggleHighlightNeighbors(bool value) const;
-    void FinishTurn() const;
+    void FinishTurn();
 
     UFUNCTION(BlueprintCallable)
     void CollectSandwich();

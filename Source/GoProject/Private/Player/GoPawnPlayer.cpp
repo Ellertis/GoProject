@@ -139,8 +139,8 @@ TArray<AGoTile*> AGoPawnPlayer::GetValidMoveTiles() const
 
 void AGoPawnPlayer::MoveToTile(AGoTile* Tile)
 {
-	if (!GetValidMoveTiles().Contains(Tile)) {UE_LOG(LogTemp, Warning, TEXT("Player move failed: Not a valid move tile"));return;}
-	
+	if (!GetValidMoveTiles().Contains(Tile)){	return;}
+	ClearJakePlacementHighlights();	
 	if (CurrTile == CurrentJakeTile) {UnregisterEntityOnJakeTile(this);}
 	
 	if (Tile->TileType == ETileType::Sandwich)
@@ -171,8 +171,9 @@ void AGoPawnPlayer::ToggleHighlightNeighbors(bool value) const
     }
 }
 
-void AGoPawnPlayer::FinishTurn() const
+void AGoPawnPlayer::FinishTurn()
 {
+	if(Cast<AGoGameModeBase>(GetWorld()->GetAuthGameMode())->GetSandwichCount() > 0 && !JakeIsPlaced){UpdateJakePlacementHighlights();}
     OnPlayerMovement.Broadcast();
 }
 
