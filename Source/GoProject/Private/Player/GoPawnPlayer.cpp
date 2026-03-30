@@ -67,7 +67,7 @@ void AGoPawnPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
     {
         EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Started, this, &AGoPawnPlayer::OnClickTrigger);
         EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Completed, this, &AGoPawnPlayer::OnClickReleased);
-    	EnhancedInputComponent->BindAction(JakePlacementAction, ETriggerEvent::Triggered, this, &AGoPawnPlayer::OnJakePlacementTriggered);
+    	if(AssignDebugJakePlacementMode){EnhancedInputComponent->BindAction(JakePlacementAction, ETriggerEvent::Triggered, this, &AGoPawnPlayer::OnJakePlacementTriggered);}
     }
 }
 
@@ -81,7 +81,7 @@ void AGoPawnPlayer::OnClickTrigger()
 {
     if (TurnManager->CurrentTurnPhase != ETurnPhase::PlayerTurn) return;
 	
-    if (bIsJakePlacementMode  || bIsMoving == true) return;
+    if (bIsJakePlacementMode || bIsMoving == true) return;
     
     FHitResult HitResult;
     PlayerController->GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Player), true, HitResult);
