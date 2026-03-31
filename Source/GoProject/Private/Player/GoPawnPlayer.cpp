@@ -238,8 +238,8 @@ void AGoPawnPlayer::EnterJakePlacementMode()
 
     if (TurnManager->CurrentTurnPhase != ETurnPhase::PlayerTurn){return;}
 	if (JakeIsPlaced) {return;}
-    if (SelectedActor == this){ToggleHighlightNeighbors(false);SelectedActor = nullptr;}
-
+    //if (SelectedActor == this){ToggleHighlightNeighbors(false);SelectedActor = nullptr;}
+	if(GetValidJakePlacementTiles().Num() == 0){return;}
     bIsJakePlacementMode = true;
     UpdateJakePlacementHighlights();
     OnEnterJakePlacementMode();
@@ -252,8 +252,6 @@ void AGoPawnPlayer::ExitJakePlacementMode()
         bIsJakePlacementMode = false;
         ClearJakePlacementHighlights();
         OnExitJakePlacementMode();
-        
-        UE_LOG(LogTemp, Display, TEXT("Exited Jake placement mode"));
     }
 }
 
