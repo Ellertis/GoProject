@@ -88,9 +88,8 @@ void AGoPawnEnemyGunter::PreTurnUpdate_Implementation()
             if (TileManager->IsValidIndex(TargetCoordPerp.X, TargetCoordPerp.Y))
             {
                 int TargetIndexPerp = TileManager->Get1DIndex(TargetCoordPerp.X, TargetCoordPerp.Y);
-                bool bCanMove = CanMoveToTileIndex(TargetIndexPerp);
                 
-                if (bCanMove)
+                if (CanMoveToTileIndex(TargetIndexPerp))
                 {
                     TArray<int> ReachableIndices;
                     float AvgDistance = 0;
@@ -280,7 +279,7 @@ void AGoPawnEnemyGunter::OnPostMove_Implementation()
     if(!bIsFleeing)
     {
         EFaceDirection NewFaceDirection = GetBestDirectionCombined();
-        PendingMoveTile = nullptr; //crucial to not trigger movement animation after rotation is finished
+        PendingMoveTile = nullptr; //crucial to not trigger movement logic after rotation is finished
         StartRotationToDirection(NewFaceDirection, RotationDuration);
     }
     
