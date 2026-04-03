@@ -267,18 +267,19 @@ int UGoPathfindingSubsystem::CountReachableTilesInDirection(int StartIndex, EFac
     OutAvgDistance = 0;
     
     FIntPoint PerpDir1, PerpDir2;
-    if (PrimaryDir.X != 0) // Horizontal movement
+    if (PrimaryDir.X != 0)
     {
         PerpDir1 = FIntPoint(0, 1);
         PerpDir2 = FIntPoint(0, -1);
     }
-    else // Vertical movement
+    else
     {
         PerpDir1 = FIntPoint(1, 0);
         PerpDir2 = FIntPoint(-1, 0);
     }
     
     FIntPoint OppositeDir = FIntPoint(-PrimaryDir.X, -PrimaryDir.Y);
+    TArray<FIntPoint> NeighborDirs = { PrimaryDir, OppositeDir, PerpDir1, PerpDir2 };
     
     int TileCount = 0;
     
@@ -288,8 +289,6 @@ int UGoPathfindingSubsystem::CountReachableTilesInDirection(int StartIndex, EFac
         Queue.RemoveAt(0);
         
         FIntPoint CurrentPos = TileManager->Get2DIndex(CurrentIndex);
-        
-        TArray<FIntPoint> NeighborDirs = { PrimaryDir, OppositeDir, PerpDir1, PerpDir2 };
         
         for (const FIntPoint& DirVec : NeighborDirs)
         {
@@ -305,7 +304,7 @@ int UGoPathfindingSubsystem::CountReachableTilesInDirection(int StartIndex, EFac
             if (!NeighborTile || !NeighborTile->Walkable) {continue;}
             if (!TileManager->AreConnected(CurrentIndex, NeighborIndex)) {continue;}
             if (EnemyManager && EnemyManager->IsTileOccupied(NeighborIndex, nullptr)) {continue;}
-
+            
             FIntPoint Delta = NeighborPos - StartPos;
             float Dot = (Delta.X * PrimaryDir.X) + (Delta.Y * PrimaryDir.Y);
             

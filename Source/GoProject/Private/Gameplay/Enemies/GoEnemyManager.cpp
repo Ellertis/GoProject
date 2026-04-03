@@ -93,7 +93,7 @@ void AGoEnemyManager::OnEnemyMoveCompleted(AGoPawnEnemy* Enemy)
 void AGoEnemyManager::OnNewEnemyTurn(const ETurnPhase NewTurnPhase)
 {
     if (NewTurnPhase != ETurnPhase::EnemyTurn) return;
-    
+	if (PlayerRef) {PlayerRef->CheckJakeTileRemoval();}
     bIsProcessingTurn = true;
     bWaitingToEndTurn = false;
 	bIsGunterPlayingFearAnimation = false;
@@ -379,11 +379,6 @@ void AGoEnemyManager::EndTurn()
 	bIsProcessingTurn = false;
 	
     UpdateOccupancy();
-	
-	if (PlayerRef)
-	{
-		PlayerRef->CheckJakeTileRemoval();
-	}
 	
 	NoRemainingEnemyTurns.Broadcast();
 	UE_LOG(LogTemp, Display, TEXT("Enemy turn ended"));
