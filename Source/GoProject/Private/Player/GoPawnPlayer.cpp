@@ -231,9 +231,14 @@ void AGoPawnPlayer::ToggleJakePlacementMode()
     else{EnterJakePlacementMode();}
 }
 
+void AGoPawnPlayer::OnTryEnterJakePlacementMode_Implementation()
+{
+}
+
 void AGoPawnPlayer::EnterJakePlacementMode()
 {
     AGoGameModeBase* GameMode = Cast<AGoGameModeBase>(GetWorld()->GetAuthGameMode());
+	OnTryEnterJakePlacementMode();
     if (!GameMode || GameMode->GetSandwichCount() <= 0){return;}
 
     if (TurnManager->CurrentTurnPhase != ETurnPhase::PlayerTurn){return;}
@@ -250,7 +255,6 @@ void AGoPawnPlayer::ExitJakePlacementMode()
     if (bIsJakePlacementMode)
     {
         bIsJakePlacementMode = false;
-        ClearJakePlacementHighlights();
         OnExitJakePlacementMode();
     }
 }

@@ -124,6 +124,10 @@ public:
     UFUNCTION(BlueprintCallable)
     void ToggleJakePlacementMode();
 
+	UFUNCTION(BlueprintNativeEvent)
+	void OnTryEnterJakePlacementMode();
+	void OnTryEnterJakePlacementMode_Implementation();
+
     UFUNCTION(BlueprintCallable)
     void EnterJakePlacementMode();
 
