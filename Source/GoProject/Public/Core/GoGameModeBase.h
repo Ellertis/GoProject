@@ -14,6 +14,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameWin);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameOver);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameStart);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSandwichUpdate, int, Count);
 
 UCLASS()
 class GOPROJECT_API AGoGameModeBase : public AGameModeBase
@@ -42,10 +43,10 @@ public:
     int GetSandwichCount() const { return SandwichCount; }
     
     UFUNCTION(BlueprintCallable)
-    void AddSandwich(int Amount) { SandwichCount += Amount; }
+    void AddSandwich(int Amount) { SandwichCount += Amount; OnSandwichUpdate.Broadcast(SandwichCount); }
     
     UFUNCTION(BlueprintCallable)
-    bool UseSandwich() { if (SandwichCount > 0) { SandwichCount--; return true; } return false; }
+    bool UseSandwich() { if (SandwichCount > 0) { SandwichCount--; OnSandwichUpdate.Broadcast(SandwichCount); return true; } return false; }
 	
     UPROPERTY(BlueprintAssignable)
     FOnGameWin OnGameWin;
@@ -55,6 +56,9 @@ public:
 
     UPROPERTY(BlueprintAssignable)
     FOnGameStart OnGameStart;
+
+    UPROPERTY(BlueprintAssignable)
+    FOnSandwichUpdate OnSandwichUpdate;
     
 
 protected:
