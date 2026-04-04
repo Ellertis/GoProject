@@ -60,6 +60,9 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "State")
     bool bIsProcessingTurn;
 
+	UPROPERTY(BlueprintReadWrite, Category = "State")
+	bool bIsEndingTurn = false;
+
 	UPROPERTY(BlueprintReadWrite, Category = "Turn")
 	bool bIsGunterPlayingFearAnimation = false;
 

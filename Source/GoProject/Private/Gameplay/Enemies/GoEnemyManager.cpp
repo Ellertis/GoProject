@@ -48,21 +48,16 @@ void AGoEnemyManager::OnGunterFearAnimationComplete()
 void AGoEnemyManager::OnGunterImmediateMoveCompleted()
 {
 	UpdateOccupancy();
-
+	
 	for (AGoPawnEnemy* Enemy : Enemies)
 	{
-		if (AGoPawnEnemyGunter* Gunter = Cast<AGoPawnEnemyGunter>(Enemy)) {Gunter->bIsFleeing = false; Gunter->OnPostMove();}
-	}
-	
-	if (bWaitingToEndTurn && ActiveSnowballs.Num() == 0)
-	{
-		EndTurn();
+		if (AGoPawnEnemyGunter* Gunter = Cast<AGoPawnEnemyGunter>(Enemy)) {Gunter->bIsFleeing = true; Gunter->OnPostMove();}
 	}
 }
 
 void AGoEnemyManager::OnEnemyMoveCompleted(AGoPawnEnemy* Enemy)
 {
-	if (!Enemy) return;
+	if (!Enemy || bIsEndingTurn) return;
     
     UpdateOccupancy();
     
@@ -70,7 +65,7 @@ void AGoEnemyManager::OnEnemyMoveCompleted(AGoPawnEnemy* Enemy)
 	{
 		PendingGunterMoves--;
 		
-		if (PendingGunterMoves <= 0)
+		if (PendingGunterMoves == 0)
 		{
 			TArray<AGoPawnEnemySnowmen*> Snowmen;
 			for (AGoPawnEnemy* E : Enemies)
@@ -95,6 +90,7 @@ void AGoEnemyManager::OnNewEnemyTurn(const ETurnPhase NewTurnPhase)
     if (NewTurnPhase != ETurnPhase::EnemyTurn) return;
 	if (PlayerRef) {PlayerRef->CheckJakeTileRemoval();}
     bIsProcessingTurn = true;
+	bIsEndingTurn = false;
     bWaitingToEndTurn = false;
 	bIsGunterPlayingFearAnimation = false;
 	CurrentGunter = nullptr;
@@ -354,7 +350,7 @@ void AGoEnemyManager::UnregisterSnowball(AGoSnowball* Snowball)
 {
     if (Snowball) {ActiveSnowballs.Remove(Snowball);}
     
-    if (bWaitingToEndTurn && ActiveSnowballs.Num() == 0) {EndTurn();}
+    if (bWaitingToEndTurn && ActiveSnowballs.Num() == 0) {TryEndTurn();}
 }
 
 void AGoEnemyManager::TryEndTurn()
@@ -368,13 +364,15 @@ void AGoEnemyManager::TryEndTurn()
     			Gunter->ExecuteQueuedMove();
     		}
     	}
-	    EndTurn();
+    	EndTurn();
     }
     else {bWaitingToEndTurn = true;}
 }
 
 void AGoEnemyManager::EndTurn()
 {
+	if(bIsEndingTurn){return;}
+	bIsEndingTurn = true;
 	bWaitingToEndTurn = false;
 	bIsProcessingTurn = false;
 	

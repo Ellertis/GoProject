@@ -116,6 +116,7 @@ void AGoPawnEnemyGunter::PreTurnUpdate_Implementation()
             StartFleeing(true, BestPerpDir);
             return;
         }
+        if(bIsFleeing){bIsFleeing = false;}
     }
 }
 
@@ -229,9 +230,11 @@ FMoveIntent AGoPawnEnemyGunter::ComputeMoveIntent_Implementation() const
         AGoTile* TargetTilePtr = GetTileFromIndex(TargetIndex);
 
         if (TargetTilePtr && TargetTilePtr->Walkable && 
-            TileManager->AreConnected(CurrTile->Index, TargetIndex) &&
-            !EnemyManager->IsTileOccupied(TargetIndex, this))
+            TileManager->AreConnected(CurrTile->Index, TargetIndex)) //&&
+            //!EnemyManager->IsTileOccupied(TargetIndex, this))
         {
+            if(EnemyManager->IsTileOccupied(TargetIndex, this) || TargetIndex == PlayerRef->CurrTile->Index)
+                {const_cast<AGoPawnEnemyGunter*>(this)->bEnemyInFront = true; return Intent;}
             Intent.TargetTile = TargetTilePtr;
             Intent.NewDirection = FleeDirection;
             return Intent;
@@ -251,11 +254,11 @@ void AGoPawnEnemyGunter::OnPostMove_Implementation()
 {
     if (!bIsFleeing) return;
     
-    if (CurrTile == PrevTile)
+    if (CurrTile == PrevTile && !bEnemyInFront)
     {
         bIsFleeing = false;
     }
-    
+    bEnemyInFront = false;
     FIntPoint GunterCoord = TileManager->Get2DIndex(CurrTile->Index);
     FIntPoint TargetCoord = GunterCoord + GetDirectionDelta(FleeDirection);
 
@@ -265,8 +268,8 @@ void AGoPawnEnemyGunter::OnPostMove_Implementation()
         AGoTile* TargetTilePtr = GetTileFromIndex(TargetIndex);
 
         if (!TargetTilePtr || !TargetTilePtr->Walkable || 
-            !TileManager->AreConnected(CurrTile->Index, TargetIndex) ||
-            EnemyManager->IsTileOccupied(TargetIndex, this))
+            !TileManager->AreConnected(CurrTile->Index, TargetIndex)) //||
+            //EnemyManager->IsTileOccupied(TargetIndex, this))
         {
             bIsFleeing = false;
         }
@@ -327,7 +330,6 @@ void AGoPawnEnemyGunter::ExecuteQueuedMove()
     if (!bQueuedMoveFromHit) return;
     
     bQueuedMoveFromHit = false;
-    
     StartFleeing(true, QueuedMoveDirection);
     
     FMoveIntent Intent;
@@ -343,10 +345,13 @@ void AGoPawnEnemyGunter::ExecuteQueuedMove()
         if (Intent.TargetTile && Intent.TargetTile != CurrTile)
         {
             ApplyMoveIntent_Implementation(Intent);
-            //should be exeuted after anim is finished
-            if (EnemyManager) {EnemyManager->OnGunterImmediateMoveCompleted();}
         }
     }
+}
+
+void AGoPawnEnemyGunter::OnExecutedQueuedMovedComplete()
+{
+    if (EnemyManager) {EnemyManager->OnGunterImmediateMoveCompleted();}
 }
 
 void AGoPawnEnemyGunter::PlayFearAnimation_Implementation()

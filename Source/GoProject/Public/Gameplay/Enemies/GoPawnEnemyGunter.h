@@ -34,6 +34,9 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "State")
     bool bIsFleeing;
 
+	UPROPERTY(BlueprintReadWrite, Category = "State")
+	bool bEnemyInFront;
+
     UPROPERTY(BlueprintReadWrite, Category = "State")
     EFaceDirection PostHitDirection;
 
@@ -65,6 +68,9 @@ public:
 	void OnFearAnimationComplete();
 
 	void ExecuteQueuedMove();
+
+	UFUNCTION(BlueprintCallable)
+	void OnExecutedQueuedMovedComplete();
 	
 	bool CanMoveToTileIndex(int TileIndex) const;
 

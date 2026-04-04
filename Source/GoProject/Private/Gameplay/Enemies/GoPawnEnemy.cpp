@@ -32,25 +32,8 @@ void AGoPawnEnemy::ApplyMoveIntent_Implementation(const FMoveIntent& Intent)
         StartRotationToDirection(Intent.NewDirection, RotationDuration);
         return;
     }
-    /*
-    //Rotation logic starts here 
-    FRotator NewRotation = FRotator::ZeroRotator;
-    switch (Intent.NewDirection)
-    {
-        case EFaceDirection::Xplus:  NewRotation = FRotator(0, 0, 0); break;
-        case EFaceDirection::Xminus: NewRotation = FRotator(0, 180, 0); break;
-        case EFaceDirection::Yplus:  NewRotation = FRotator(0, 90, 0); break;
-        case EFaceDirection::Yminus: NewRotation = FRotator(0, -90, 0); break;
-    }
-	
-    SetActorRotation(NewRotation);
-    Direction = Intent.NewDirection;
-    */
+
 	StartMoveToTile(Intent.TargetTile, MoveDuration);
-	/*
-	OnMoveToTile(Intent.TargetTile);
-    OnMoveEnd();
-	 */
 }
 
 void AGoPawnEnemy::OnPostMove_Implementation()
