@@ -3,6 +3,7 @@
 #include "Core/GoPawn.h"
 
 #include "Gameplay/Enemies/GoPawnEnemy.h"
+#include "Gameplay/Enemies/GoPawnEnemyGunter.h"
 #include "Gameplay/Tile/GoTile.h"
 #include "Player/GoPawnPlayer.h"
 
@@ -154,7 +155,8 @@ void AGoPawn::FinishMove()
 	}
 	else if (AGoPawnEnemy* Enemy = Cast<AGoPawnEnemy>(this))
 	{
-		if (EnemyManager){EnemyManager->OnEnemyMoveCompleted(Enemy);}
+		if(AGoPawnEnemyGunter* Gunter = Cast<AGoPawnEnemyGunter>(this)){if(Gunter->bWasHitThisTurn && EnemyManager){EnemyManager->OnGunterImmediateMoveCompleted();return;}} //Add On immideate move end
+		if(EnemyManager){EnemyManager->OnEnemyMoveCompleted(Enemy);}
 	}
 }
 

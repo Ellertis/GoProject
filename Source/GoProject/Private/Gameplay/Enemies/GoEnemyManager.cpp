@@ -32,7 +32,7 @@ void AGoEnemyManager::Tick(float DeltaTime)
 void AGoEnemyManager::OnGunterFearAnimationComplete()
 {
 	bIsGunterPlayingFearAnimation = false;
-	
+	if(CurrentGunter->bWasHitThisTurn){return;}
 	TArray<AGoPawnEnemySnowmen*> Snowmen;
 	for (AGoPawnEnemy* Enemy : Enemies)
 	{
@@ -53,6 +53,7 @@ void AGoEnemyManager::OnGunterImmediateMoveCompleted()
 	{
 		if (AGoPawnEnemyGunter* Gunter = Cast<AGoPawnEnemyGunter>(Enemy)) {Gunter->bIsFleeing = true; Gunter->OnPostMove();}
 	}
+	EndTurn();
 }
 
 void AGoEnemyManager::OnEnemyMoveCompleted(AGoPawnEnemy* Enemy)
@@ -371,7 +372,7 @@ void AGoEnemyManager::TryEndTurn()
 
 void AGoEnemyManager::EndTurn()
 {
-	if(bIsEndingTurn){return;}
+	if(bIsEndingTurn || bIsGunterPlayingFearAnimation){return;}
 	bIsEndingTurn = true;
 	bWaitingToEndTurn = false;
 	bIsProcessingTurn = false;
