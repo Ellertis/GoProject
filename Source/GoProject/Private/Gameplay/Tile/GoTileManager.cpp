@@ -173,7 +173,7 @@ void AGoTileManager::VisualizeConnections()
 
 			// Spawn Links
 			FTransform LinkTransform;
-			LinkTransform.SetLocation(Start + Dir / 2 + FVector(0,0,ZOffset)); // midpoint + offset
+			LinkTransform.SetLocation(Start + Dir / 2); // midpoint
 			//LinkTransform.SetRotation(UE::Math::TQuat<double>(FRotationMatrix::MakeFromZ(Dir).Rotator())); // alt rotation calculation method
 			//LinkTransform.SetRotation(FQuat::FindBetweenNormals(FVector::UpVector, Dir.GetSafeNormal()));
 			FRotator Rot = Dir.Rotation();
