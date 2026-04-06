@@ -2738,6 +2738,18 @@
 			"Type": "RequiredResource"
 		},
 		{
+			"Path": "$(EngineDir)/Plugins/Experimental/AnimToTexture/Binaries/Win64/UnrealEditor-AnimToTexture.dll",
+			"Type": "DynamicLibrary"
+		},
+		{
+			"Path": "$(EngineDir)/Plugins/Experimental/AnimToTexture/Binaries/Win64/UnrealEditor-AnimToTextureEditor.dll",
+			"Type": "DynamicLibrary"
+		},
+		{
+			"Path": "$(EngineDir)/Plugins/Experimental/AnimToTexture/Binaries/Win64/UnrealEditor.modules",
+			"Type": "RequiredResource"
+		},
+		{
 			"Path": "$(EngineDir)/Plugins/Experimental/AutomationUtils/Binaries/Win64/UnrealEditor-AutomationUtils.dll",
 			"Type": "DynamicLibrary"
 		},
@@ -28244,6 +28256,10 @@
 			"Type": "UFS"
 		},
 		{
+			"Path": "$(EngineDir)/Plugins/Experimental/AnimToTexture/AnimToTexture.uplugin",
+			"Type": "UFS"
+		},
+		{
 			"Path": "$(EngineDir)/Plugins/Experimental/AutomationUtils/AutomationUtils.uplugin",
 			"Type": "UFS"
 		},
@@ -28728,6 +28744,7 @@
 		"AndroidMedia",
 		"AndroidMoviePlayer",
 		"AndroidPermission",
+		"AnimToTexture",
 		"AnimationData",
 		"AnimationModifierLibrary",
 		"AnimationSharing",
