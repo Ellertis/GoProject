@@ -129,7 +129,7 @@ void AGoPawnEnemyGunter::PreTurnUpdate_Implementation()
             return;
         }
         
-        if(bIsFleeing){bIsFleeing = false;}
+        //if(bIsFleeing){bIsFleeing = false;}
     }
 }
 
