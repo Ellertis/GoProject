@@ -33,8 +33,7 @@ FMoveIntent AGoPawnEnemySnowmen::ComputeMoveIntent_Implementation() const
 	// Check if next tile is walkable and not occupied, not connected
 	if (!TargetTilePtr || !TargetTilePtr->Walkable || 
 		(EnemyManager && EnemyManager->IsTileOccupied(TargetIndex, this)) ||
-		!TileManager->AreConnected(CurrTile->Index, TargetIndex) ||
-		TargetTilePtr->TileType == ETileType::Jake) 
+		!TileManager->AreConnected(CurrTile->Index, TargetIndex)) 
 	{
 		Intent.NewDirection = GetOppositeDirection(MoveDir);
 		return Intent;
@@ -53,8 +52,7 @@ FMoveIntent AGoPawnEnemySnowmen::ComputeMoveIntent_Implementation() const
 		// If beyond tile is invalid/blocked, turn around after moving not connected
 		if (!BeyondTile || !BeyondTile->Walkable || 
 			(EnemyManager && EnemyManager->IsTileOccupied(BeyondIndex, this)) ||
-			!TileManager->AreConnected(TargetIndex, BeyondIndex) ||
-			BeyondTile->TileType == ETileType::Jake)
+			!TileManager->AreConnected(TargetIndex, BeyondIndex))
 		{
 			Intent.NewDirection = GetOppositeDirection(MoveDir);
 		}

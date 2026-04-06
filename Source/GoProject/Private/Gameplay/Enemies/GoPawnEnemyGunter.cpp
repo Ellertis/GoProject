@@ -77,6 +77,18 @@ void AGoPawnEnemyGunter::PreTurnUpdate_Implementation()
         
         // Evaluate both perpendicular directions
         EFaceDirection BestPerpDir = AwayDir;
+        
+        if(GetBestPerpendicularDirection(LeftDir, RightDir, GunterPos,BestPerpDir))
+        {
+            if(!bIsFleeing)
+            {
+                if(EnemyManager){EnemyManager->bIsGunterPlayingFearAnimation = true;}
+                PlayFearAnimation();
+            }
+            StartFleeing(true, BestPerpDir);
+            return;
+        }
+        
         int BestReachable = 0;
         float BestAvgDist = -1;
         
@@ -93,7 +105,7 @@ void AGoPawnEnemyGunter::PreTurnUpdate_Implementation()
                 {
                     TArray<int> ReachableIndices;
                     float AvgDistance = 0;
-                    int ReachableCount = CountReachableTilesInDirection(PerpDir, ReachableIndices, AvgDistance);
+                    int ReachableCount = BFSCountReachableTilesInDirection(PerpDir, ReachableIndices, AvgDistance);
                     
                     if (ReachableCount > 0 && (ReachableCount > BestReachable || 
                         (ReachableCount == BestReachable && AvgDistance > BestAvgDist)))
@@ -116,6 +128,7 @@ void AGoPawnEnemyGunter::PreTurnUpdate_Implementation()
             StartFleeing(true, BestPerpDir);
             return;
         }
+        
         if(bIsFleeing){bIsFleeing = false;}
     }
 }
@@ -177,7 +190,7 @@ EFaceDirection AGoPawnEnemyGunter::GetBestDirectionCombined() const
             if (Score.bHasImmediateMove && PathfindingSubsystem && PlayerRef && PlayerRef->CurrTile)
             {
                 TArray<int> ReachableIndices;
-                Score.ReachableTiles = CountReachableTilesInDirection(Dir, ReachableIndices, Score.AvgDistanceFromPlayer);
+                Score.ReachableTiles = BFSCountReachableTilesInDirection(Dir, ReachableIndices, Score.AvgDistanceFromPlayer);
             }
         }
         else
@@ -359,7 +372,7 @@ void AGoPawnEnemyGunter::PlayFearAnimation_Implementation()
     //Blueprint implementation
 }
 
-int AGoPawnEnemyGunter::CountReachableTilesInDirection(EFaceDirection Dir, TArray<int>& OutReachableTiles, float& OutAvgDistance) const
+int AGoPawnEnemyGunter::BFSCountReachableTilesInDirection(EFaceDirection Dir, TArray<int>& OutReachableTiles, float& OutAvgDistance) const
 {
     if (!PathfindingSubsystem || !PlayerRef || !PlayerRef->CurrTile) 
     {
@@ -368,4 +381,43 @@ int AGoPawnEnemyGunter::CountReachableTilesInDirection(EFaceDirection Dir, TArra
     
     return PathfindingSubsystem->CountReachableTilesInDirection(
         CurrTile->Index, Dir, PlayerRef->CurrTile->Index, EnemyManager, OutReachableTiles, OutAvgDistance);
+}
+
+int AGoPawnEnemyGunter::CountAvailableTilesInDirection(EFaceDirection Dir, const FIntPoint& StartPos) const
+{
+    if (!TileManager) return 0;
+    int Count = 0;
+    FIntPoint CurrentPos = StartPos;
+    int LastValidIndex = TileManager->Get1DIndex(StartPos.X, StartPos.Y);
+    
+    while (true)
+    {
+        FIntPoint NextPos = CurrentPos + GetDirectionDelta(Dir);
+        if (!TileManager->IsValidIndex(NextPos.X, NextPos.Y)){break;}
+        int NextIndex = TileManager->Get1DIndex(NextPos.X, NextPos.Y);
+        AGoTile* NextTile = GetTileFromIndex(NextIndex);
+        if (!NextTile || !NextTile->Walkable){break;}
+        if (!TileManager->AreConnected(LastValidIndex, NextIndex)){break;}
+        if (EnemyManager && EnemyManager->IsTileOccupied(NextIndex, this)){break;}
+        if (PlayerRef && PlayerRef->CurrTile && PlayerRef->CurrTile->Index == NextIndex){break;}
+        
+        Count++;
+        CurrentPos = NextPos;
+        LastValidIndex = NextIndex;
+    }
+    
+    return Count;
+}
+
+bool AGoPawnEnemyGunter::GetBestPerpendicularDirection(EFaceDirection LeftDir, EFaceDirection RightDir, const FIntPoint& GunterPos, EFaceDirection& OutBestDir) const
+{
+    int LeftCount = CountAvailableTilesInDirection(LeftDir, GunterPos);
+    int RightCount = CountAvailableTilesInDirection(RightDir, GunterPos);
+    UE_LOG(LogTemp,Error, TEXT("Left Count: %d, Right Count: %d"), LeftCount, RightCount);
+    if (LeftCount > 0 || RightCount > 0){
+        if (LeftCount > RightCount) {OutBestDir = LeftDir; return true;}
+        if (RightCount > LeftCount) {OutBestDir = RightDir; return true;}
+        if (LeftCount == RightCount) {return false;}
+    }
+    return false;
 }

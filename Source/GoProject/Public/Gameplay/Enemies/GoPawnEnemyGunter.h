@@ -76,7 +76,11 @@ public:
 
 	EFaceDirection GetBestDirectionCombined() const;
 
-	int CountReachableTilesInDirection(EFaceDirection Dir, TArray<int>& OutReachableTiles, float& OutAvgDistance) const;
+	int BFSCountReachableTilesInDirection(EFaceDirection Dir, TArray<int>& OutReachableTiles, float& OutAvgDistance) const;
+	
+    int CountAvailableTilesInDirection(EFaceDirection Dir, const FIntPoint& StartPos) const;
+	
+    bool GetBestPerpendicularDirection(EFaceDirection LeftDir, EFaceDirection RightDir, const FIntPoint& GunterPos,EFaceDirection& OutBestDir) const;
 
 protected:
     virtual void BeginPlay() override;
