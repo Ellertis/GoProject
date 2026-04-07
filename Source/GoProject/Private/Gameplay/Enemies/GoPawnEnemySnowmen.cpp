@@ -20,69 +20,83 @@ FMoveIntent AGoPawnEnemySnowmen::ComputeMoveIntent_Implementation() const
 	FIntPoint TargetCoord = CurrCoord + GetDirectionDelta(Direction);
 	EFaceDirection MoveDir = Direction;
 	
-	// Check if next tile is valid
-	if (!TileManager->IsValidIndex(TargetCoord.X, TargetCoord.Y)) 
-	{
-		Intent.NewDirection = GetOppositeDirection(MoveDir);
-		return Intent;
-	}
-
-	int TargetIndex = TileManager->Get1DIndex(TargetCoord.X, TargetCoord.Y);
-	AGoTile* TargetTilePtr = TileManager->Tiles[TargetIndex];
+	bool bForwardValid = false;
+	AGoTile* ForwardTile = nullptr;
 	
-	// Check if next tile is walkable and not occupied, not connected
-	if (!TargetTilePtr || !TargetTilePtr->Walkable || 
-		(EnemyManager && EnemyManager->IsTileOccupied(TargetIndex, this)) ||
-		!TileManager->AreConnected(CurrTile->Index, TargetIndex)) 
+	if (TileManager->IsValidIndex(TargetCoord.X, TargetCoord.Y))
 	{
-		Intent.NewDirection = GetOppositeDirection(MoveDir);
-		return Intent;
+		int ForwardIndex = TileManager->Get1DIndex(TargetCoord.X, TargetCoord.Y);
+		ForwardTile = TileManager->Tiles[ForwardIndex];
+		
+		if (ForwardTile && ForwardTile->Walkable && 
+			TileManager->AreConnected(CurrTile->Index, ForwardIndex) &&
+			(!EnemyManager || !EnemyManager->IsTileOccupied(ForwardIndex, this)))
+		{
+			bForwardValid = true;
+		}
 	}
 	
-	Intent.TargetTile = TargetTilePtr;
-    
-	// Check the beyond tile to decide if we should turn around next turn
+	if (!bForwardValid)
+	{
+		EFaceDirection OppositeDir = GetOppositeDirection(MoveDir);
+		FIntPoint BackwardCoord = CurrCoord + GetDirectionDelta(OppositeDir);
+		
+		if (TileManager->IsValidIndex(BackwardCoord.X, BackwardCoord.Y))
+		{
+			int BackwardIndex = TileManager->Get1DIndex(BackwardCoord.X, BackwardCoord.Y);
+			AGoTile* BackwardTile = TileManager->Tiles[BackwardIndex];
+			
+			if (BackwardTile && BackwardTile->Walkable && 
+				TileManager->AreConnected(CurrTile->Index, BackwardIndex) &&
+				(!EnemyManager || !EnemyManager->IsTileOccupied(BackwardIndex, this)))
+			{
+				Intent.TargetTile = BackwardTile;
+				Intent.NewDirection = OppositeDir;
+				return Intent;
+			}
+		}
+		Intent.NewDirection = OppositeDir;
+		return Intent;
+	}
+	Intent.TargetTile = ForwardTile;
 	FIntPoint BeyondCoord = TargetCoord + GetDirectionDelta(Direction);
 	
 	if (TileManager->IsValidIndex(BeyondCoord.X, BeyondCoord.Y))
 	{
 		int BeyondIndex = TileManager->Get1DIndex(BeyondCoord.X, BeyondCoord.Y);
 		AGoTile* BeyondTile = TileManager->Tiles[BeyondIndex];
+		int ForwardIndex = TileManager->Get1DIndex(TargetCoord.X, TargetCoord.Y);
 		
-		// If beyond tile is invalid/blocked, turn around after moving not connected
 		if (!BeyondTile || !BeyondTile->Walkable || 
-			(EnemyManager && EnemyManager->IsTileOccupied(BeyondIndex, this)) ||
-			!TileManager->AreConnected(TargetIndex, BeyondIndex))
+			!TileManager->AreConnected(ForwardIndex, BeyondIndex) ||
+			(EnemyManager && EnemyManager->IsTileOccupied(BeyondIndex, this)))
 		{
 			Intent.NewDirection = GetOppositeDirection(MoveDir);
 		}
 	}
-	else
-	{
-		Intent.NewDirection = GetOppositeDirection(MoveDir);
-	}
-
+	else{Intent.NewDirection = GetOppositeDirection(MoveDir);}
+	
 	return Intent;
 }
 
 void AGoPawnEnemySnowmen::ApplyMoveIntent_Implementation(const FMoveIntent& Intent)
 {
-	// Store the target for the movement system
-	if (Intent.TargetTile && Intent.TargetTile != CurrTile)
+	if (Intent.NewDirection != Direction)
 	{
 		FRotator NewRotation = FRotator::ZeroRotator;
 		switch (Intent.NewDirection)
 		{
-			case EFaceDirection::Xplus:  NewRotation = FRotator(0, 0, 0); break;
-			case EFaceDirection::Xminus: NewRotation = FRotator(0, 180, 0); break;
-			case EFaceDirection::Yplus:  NewRotation = FRotator(0, 90, 0); break;
-			case EFaceDirection::Yminus: NewRotation = FRotator(0, -90, 0); break;
+		case EFaceDirection::Xplus:  NewRotation = FRotator(0, 0, 0); break;
+		case EFaceDirection::Xminus: NewRotation = FRotator(0, 180, 0); break;
+		case EFaceDirection::Yplus:  NewRotation = FRotator(0, 90, 0); break;
+		case EFaceDirection::Yminus: NewRotation = FRotator(0, -90, 0); break;
 		}
 		SetActorRotation(NewRotation);
-		
 		Direction = Intent.NewDirection;
-		
-		// Start the animated movement
+	}
+	
+	if (Intent.TargetTile && Intent.TargetTile != CurrTile)
+	{
 		StartMoveToTile(Intent.TargetTile, MoveDuration);
 	}
 }
