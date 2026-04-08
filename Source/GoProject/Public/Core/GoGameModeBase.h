@@ -14,6 +14,8 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameWin);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameOver);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameStart);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameOverFinn);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameOverGunter);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSandwichUpdate, int, Count);
 
 UCLASS()
@@ -29,6 +31,12 @@ public:
 
     UFUNCTION(BlueprintCallable)
     void GameWin();
+
+    UFUNCTION(BlueprintCallable)
+    void GameOverGunter();
+
+    UFUNCTION(BlueprintCallable)
+    void GameOverFinn();
 
     UFUNCTION(BlueprintCallable)
     void GameStart();
@@ -59,7 +67,12 @@ public:
 
     UPROPERTY(BlueprintAssignable)
     FOnSandwichUpdate OnSandwichUpdate;
-    
+
+    UPROPERTY(BlueprintAssignable)
+    FOnGameOverFinn OnGameOverFinn;
+
+    UPROPERTY(BlueprintAssignable)
+    FOnGameOverGunter OnGameOverGunter;
 
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Managers")

@@ -20,7 +20,7 @@ void AGoGameModeBase::BeginPlay()
     TurnManager->OnTurnPhaseChanged.AddDynamic(EnemyManager, &AGoEnemyManager::OnNewEnemyTurn);
     
     EnemyManager->NoRemainingEnemyTurns.AddDynamic(TurnManager, &AGoTurnManager::OnNoEnemyTurnsLeft);
-    EnemyManager->GunterIsDead.AddDynamic(this, &AGoGameModeBase::GameOver);
+    EnemyManager->GunterIsDead.AddDynamic(this, &AGoGameModeBase::GameOverGunter);
     EnemyManager->GunterEnd.AddDynamic(this, &AGoGameModeBase::GameWin);
     EnemyManager->TileManager = TM;
     
@@ -38,6 +38,16 @@ void AGoGameModeBase::GameOver()
 void AGoGameModeBase::GameWin()
 {
     OnGameWin.Broadcast();
+}
+
+void AGoGameModeBase::GameOverGunter()
+{
+    OnGameOverGunter.Broadcast();
+}
+
+void AGoGameModeBase::GameOverFinn()
+{
+    OnGameOverFinn.Broadcast();
 }
 
 void AGoGameModeBase::GameStart()
