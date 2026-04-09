@@ -14,12 +14,9 @@ void AGoTurnManager::BeginPlay()
 
 void AGoTurnManager::SetTurnPhase(ETurnPhase NewTurnPhase)
 {
-	UE_LOG(LogTemp, Display, TEXT("TurnManager: Setting phase from %d to %d"), (int)CurrentTurnPhase, (int)NewTurnPhase);
-    
 	CurrentTurnPhase = NewTurnPhase;
 	OnTurnPhaseChanged.Broadcast(CurrentTurnPhase);
-    
-	// Call Blueprint events
+	
 	switch (CurrentTurnPhase)
 	{
 		case ETurnPhase::PlayerTurn: OnPlayerTurnStarted();break;

@@ -43,7 +43,6 @@ void AGoPawnEnemyGunter::PreTurnUpdate_Implementation()
     		return;
     	}
         
-        // First, try to flee directly away from player
         FIntPoint Delta = GunterPos - PlayerPos;
         EFaceDirection AwayDir = GetDirectionFromDelta(Delta);
         FIntPoint TargetCoord = GunterPos + GetDirectionDelta(AwayDir);
@@ -64,7 +63,6 @@ void AGoPawnEnemyGunter::PreTurnUpdate_Implementation()
             }
         }
         
-        // If away direction is blocked, evaluate perpendicular directions
         EFaceDirection LeftDir, RightDir;
         switch (AwayDir)
         {
@@ -75,7 +73,6 @@ void AGoPawnEnemyGunter::PreTurnUpdate_Implementation()
             default: LeftDir = RightDir = AwayDir; break;
         }
         
-        // Evaluate both perpendicular directions
         EFaceDirection BestPerpDir = AwayDir;
         
         if(GetBestPerpendicularDirection(LeftDir, RightDir, GunterPos,BestPerpDir))
@@ -129,7 +126,6 @@ void AGoPawnEnemyGunter::PreTurnUpdate_Implementation()
             return;
         }
         
-        //if(bIsFleeing){bIsFleeing = false;}
     }
 }
 
@@ -202,7 +198,6 @@ EFaceDirection AGoPawnEnemyGunter::GetBestDirectionCombined() const
         
     }
     
-    // Filter to directions with at least one move
     TArray<FDirectionScore> ValidScores;
     for (const FDirectionScore& Score : Scores)
     {
@@ -214,7 +209,6 @@ EFaceDirection AGoPawnEnemyGunter::GetBestDirectionCombined() const
     
     if (ValidScores.Num() == 0) return Direction;
     
-    // Sort by reachable tiles (descending), then by average distance from player (descending)
     ValidScores.Sort([](const FDirectionScore& A, const FDirectionScore& B) {
         if (A.ReachableTiles != B.ReachableTiles)
         {
@@ -243,8 +237,7 @@ FMoveIntent AGoPawnEnemyGunter::ComputeMoveIntent_Implementation() const
         AGoTile* TargetTilePtr = GetTileFromIndex(TargetIndex);
 
         if (TargetTilePtr && TargetTilePtr->Walkable && 
-            TileManager->AreConnected(CurrTile->Index, TargetIndex)) //&&
-            //!EnemyManager->IsTileOccupied(TargetIndex, this))
+            TileManager->AreConnected(CurrTile->Index, TargetIndex))
         {
             if(EnemyManager->IsTileOccupied(TargetIndex, this) || TargetIndex == PlayerRef->CurrTile->Index)
                 {const_cast<AGoPawnEnemyGunter*>(this)->bEnemyInFront = true; return Intent;}
@@ -281,8 +274,7 @@ void AGoPawnEnemyGunter::OnPostMove_Implementation()
         AGoTile* TargetTilePtr = GetTileFromIndex(TargetIndex);
 
         if (!TargetTilePtr || !TargetTilePtr->Walkable || 
-            !TileManager->AreConnected(CurrTile->Index, TargetIndex)) //||
-            //EnemyManager->IsTileOccupied(TargetIndex, this))
+            !TileManager->AreConnected(CurrTile->Index, TargetIndex))
         {
             bIsFleeing = false;
         }
@@ -294,9 +286,51 @@ void AGoPawnEnemyGunter::OnPostMove_Implementation()
     
     if(!bIsFleeing)
     {
-        EFaceDirection NewFaceDirection = GetBestDirectionCombined();
-        PendingMoveTile = nullptr; //crucial to not trigger movement logic after rotation is finished
-        StartRotationToDirection(NewFaceDirection, RotationDuration);
+        EFaceDirection LeftDir, RightDir;
+        switch (Direction)
+        {
+            case EFaceDirection::Xplus: LeftDir = EFaceDirection::Yminus; RightDir = EFaceDirection::Yplus; break;
+            case EFaceDirection::Xminus: LeftDir = EFaceDirection::Yplus; RightDir = EFaceDirection::Yminus; break;
+            case EFaceDirection::Yplus: LeftDir = EFaceDirection::Xminus; RightDir = EFaceDirection::Xplus; break;
+            case EFaceDirection::Yminus: LeftDir = EFaceDirection::Xplus; RightDir = EFaceDirection::Xminus; break;
+            default: LeftDir = RightDir = Direction; break;
+        }
+        
+        TArray<int> LeftReachable;
+        TArray<int> RightReachable;
+        float LeftAvgDist = 0;
+        float RightAvgDist = 0;
+        bool bLeftHasPlayer = false;
+        bool bRightHasPlayer = false;
+        
+        int LeftCount = BFSCountReachableTilesInDirection(LeftDir, LeftReachable, LeftAvgDist);
+        int RightCount = BFSCountReachableTilesInDirection(RightDir, RightReachable, RightAvgDist);
+        
+        bool bChooseLeft;
+        if (LeftCount > 0 || RightCount > 0)
+        {
+            if (bLeftHasPlayer != bRightHasPlayer)
+            {
+                bChooseLeft = !bLeftHasPlayer;
+            }
+            else if (LeftCount != RightCount)
+            {
+                bChooseLeft = LeftCount > RightCount;
+            }
+            else
+            {
+                bChooseLeft = LeftAvgDist > RightAvgDist;
+            }
+            EFaceDirection ChosenDir = bChooseLeft ? LeftDir : RightDir;
+            PendingMoveTile = nullptr;
+            StartRotationToDirection(ChosenDir, RotationDuration);
+        }
+        else
+        {
+            EFaceDirection NewFaceDirection = GetBestDirectionCombined();
+            PendingMoveTile = nullptr;
+            StartRotationToDirection(NewFaceDirection, RotationDuration);
+        }
     }
     
     PrevTile = CurrTile;
@@ -413,7 +447,6 @@ bool AGoPawnEnemyGunter::GetBestPerpendicularDirection(EFaceDirection LeftDir, E
 {
     int LeftCount = CountAvailableTilesInDirection(LeftDir, GunterPos);
     int RightCount = CountAvailableTilesInDirection(RightDir, GunterPos);
-    UE_LOG(LogTemp,Error, TEXT("Left Count: %d, Right Count: %d"), LeftCount, RightCount);
     if (LeftCount > 0 || RightCount > 0){
         if (LeftCount > RightCount) {OutBestDir = LeftDir; return true;}
         if (RightCount > LeftCount) {OutBestDir = RightDir; return true;}

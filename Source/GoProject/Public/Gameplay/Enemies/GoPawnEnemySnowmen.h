@@ -13,6 +13,8 @@ class GOPROJECT_API AGoPawnEnemySnowmen : public AGoPawnEnemy
 
 public:
 	virtual FMoveIntent ComputeMoveIntent_Implementation() const override;
+	
 	virtual void ApplyMoveIntent_Implementation(const FMoveIntent& Intent) override;
+	
 	virtual void OnPostMove_Implementation() override;
 };

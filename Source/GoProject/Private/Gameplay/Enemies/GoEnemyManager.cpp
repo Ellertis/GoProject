@@ -167,8 +167,7 @@ void AGoEnemyManager::CheckSnowmanAttacks()
     }
     
     if (Snowmen.Num() < 2) {return;}
-	
-    // Group by X and Y coordinates
+
     TMap<int, TArray<AGoPawnEnemySnowmen*>> ByX;
     TMap<int, TArray<AGoPawnEnemySnowmen*>> ByY;
     
@@ -179,8 +178,7 @@ void AGoEnemyManager::CheckSnowmanAttacks()
         ByX.FindOrAdd(Pos.X).Add(S);
         ByY.FindOrAdd(Pos.Y).Add(S);
     }
-
-    // Check vertical alignments X coordinate
+	
     for (TPair<int, TArray<AGoPawnEnemySnowmen*>>& Pair : ByX)
     {
 	    TArray<AGoPawnEnemySnowmen*>& Group = Pair.Value;
@@ -224,7 +222,6 @@ void AGoEnemyManager::CheckSnowmanAttacks()
     	}
     }
 	
-    // Check horizontal alignments Y coordinate
     for (TPair<int, TArray<AGoPawnEnemySnowmen*>>& Pair : ByY)
     {
         TArray<AGoPawnEnemySnowmen*>& Group = Pair.Value;

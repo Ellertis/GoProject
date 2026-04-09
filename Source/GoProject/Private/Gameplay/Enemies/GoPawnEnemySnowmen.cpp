@@ -12,7 +12,6 @@ FMoveIntent AGoPawnEnemySnowmen::ComputeMoveIntent_Implementation() const
 
 	if (!TileManager || !CurrTile) 
 	{
-		UE_LOG(LogTemp, Error, TEXT("Snowman: Missing TileManager or CurrTile"));
 		return Intent;
 	}
 
@@ -103,6 +102,4 @@ void AGoPawnEnemySnowmen::ApplyMoveIntent_Implementation(const FMoveIntent& Inte
 
 void AGoPawnEnemySnowmen::OnPostMove_Implementation()
 {
-	UE_LOG(LogTemp, Display, TEXT("Snowman OnPostMove at tile %d"), 
-		CurrTile ? CurrTile->Index : -1);
 }

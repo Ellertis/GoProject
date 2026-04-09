@@ -162,7 +162,6 @@ void AGoPawn::FinishMove()
 
 float AGoPawn::GetJumpHeight_Implementation(float Alpha)
 {
-	// Parabolic curve
 	return JumpHeight * 4.0f * Alpha * (1.0f - Alpha);
 }
 

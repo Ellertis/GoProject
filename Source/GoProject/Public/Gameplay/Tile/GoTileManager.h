@@ -19,12 +19,10 @@ class GOPROJECT_API AGoTileManager : public AActor
 public:	
 	// Sets default values for this actor's properties
 	AGoTileManager();
-
-	// Components
+	
 	UPROPERTY(EditAnywhere,BlueprintReadWrite)
 	USceneComponent* Root;
 	
-	// Variables
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int X = 2;
 
@@ -62,14 +60,11 @@ public:
 	FOnGridGenerated OnGridGenerated;
 
 protected:
-	// Called in editor and on spawn
 	virtual void OnConstruction(const FTransform& Transform) override;
 	
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
 	void TilesSpawner();

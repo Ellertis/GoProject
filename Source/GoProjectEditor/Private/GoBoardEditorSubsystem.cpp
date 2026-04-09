@@ -53,7 +53,7 @@ void UGoBoardEditorSubsystem::BuildNeighbors()
 		for (int j=0; j<GridY; j++)
 		{
 			if (i < 0 || j < 0 || i >= GridX || j >= GridY) continue;
-			int Index = Get1DIndex(i,j); // transform 2d coords to 1d array
+			int Index = Get1DIndex(i,j);
 			AGoTile* Tile = PreviewTiles[Index];
 			Tile->Neighbors.Empty();
 			
@@ -216,7 +216,7 @@ void UGoBoardEditorSubsystem::LoadGridPreviewFromDataAsset(UBoardDataAsset* Data
 		Tile->Walkable = TileData.Walkable;
 		Tile->Enemies = TileData.Enemies;
 		
-		Tile->UpdateDebugColors(); // Updates the debug color on the tile
+		Tile->UpdateDebugColors();
 	}
 	VisualizeConnections();
 }
@@ -261,7 +261,6 @@ void UGoBoardEditorSubsystem::VisualizeConnections()
 {
 	if (!IsValid(TileManager) || !LinkMesh) return;
 	
-	// Clear existing links first
 	for (UStaticMeshComponent* Link : Links)
 	{
 		if (IsValid(Link)) Link->DestroyComponent();

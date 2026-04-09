@@ -38,7 +38,6 @@ void AGoPawnEnemy::ApplyMoveIntent_Implementation(const FMoveIntent& Intent)
 
 void AGoPawnEnemy::OnPostMove_Implementation()
 {
-    // Base implementation
 }
 
 void AGoPawnEnemy::ApplyDamage_Implementation(int Amount, EFaceDirection HitDirection)
