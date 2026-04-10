@@ -105,7 +105,7 @@ int UGoPathfindingSubsystem::CountReachableTilesInDirection(int StartIndex, EFac
             FIntPoint Delta = NeighborPos - StartPos;
             float Dot = (Delta.X * PrimaryDir.X) + (Delta.Y * PrimaryDir.Y);
             
-            if (Dot < -0.5f) {continue;}
+            if (Dot < 0) {continue;}
             
             Visited.Add(NeighborIndex);
             Queue.Add(NeighborIndex);

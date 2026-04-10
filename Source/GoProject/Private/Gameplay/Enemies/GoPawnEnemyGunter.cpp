@@ -102,7 +102,7 @@ void AGoPawnEnemyGunter::PreTurnUpdate_Implementation()
                 {
                     TArray<int> ReachableIndices;
                     float AvgDistance = 0;
-                    int ReachableCount = BFSCountReachableTilesInDirection(PerpDir, ReachableIndices, AvgDistance);
+                    int ReachableCount = BFSCountReachableTilesInDirection(CurrTile->Index,PerpDir, ReachableIndices, AvgDistance);
                     
                     if (ReachableCount > 0 && (ReachableCount > BestReachable || 
                         (ReachableCount == BestReachable && AvgDistance > BestAvgDist)))
@@ -186,7 +186,7 @@ EFaceDirection AGoPawnEnemyGunter::GetBestDirectionCombined() const
             if (Score.bHasImmediateMove && PathfindingSubsystem && PlayerRef && PlayerRef->CurrTile)
             {
                 TArray<int> ReachableIndices;
-                Score.ReachableTiles = BFSCountReachableTilesInDirection(Dir, ReachableIndices, Score.AvgDistanceFromPlayer);
+                Score.ReachableTiles = BFSCountReachableTilesInDirection(TargetIndex,Dir, ReachableIndices, Score.AvgDistanceFromPlayer);
             }
         }
         else
@@ -303,8 +303,8 @@ void AGoPawnEnemyGunter::OnPostMove_Implementation()
         bool bLeftHasPlayer = false;
         bool bRightHasPlayer = false;
         
-        int LeftCount = BFSCountReachableTilesInDirection(LeftDir, LeftReachable, LeftAvgDist);
-        int RightCount = BFSCountReachableTilesInDirection(RightDir, RightReachable, RightAvgDist);
+        int LeftCount = BFSCountReachableTilesInDirection(CurrTile->Index,LeftDir, LeftReachable, LeftAvgDist);
+        int RightCount = BFSCountReachableTilesInDirection(CurrTile->Index,RightDir, RightReachable, RightAvgDist);
         
         bool bChooseLeft;
         if (LeftCount > 0 || RightCount > 0)
@@ -406,7 +406,7 @@ void AGoPawnEnemyGunter::PlayFearAnimation_Implementation()
     //Blueprint implementation
 }
 
-int AGoPawnEnemyGunter::BFSCountReachableTilesInDirection(EFaceDirection Dir, TArray<int>& OutReachableTiles, float& OutAvgDistance) const
+int AGoPawnEnemyGunter::BFSCountReachableTilesInDirection(int StartIndex, EFaceDirection Dir, TArray<int>& OutReachableTiles, float& OutAvgDistance) const
 {
     if (!PathfindingSubsystem || !PlayerRef || !PlayerRef->CurrTile) 
     {

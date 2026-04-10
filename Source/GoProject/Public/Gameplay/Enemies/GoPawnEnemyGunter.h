@@ -76,7 +76,7 @@ public:
 
 	EFaceDirection GetBestDirectionCombined() const;
 
-	int BFSCountReachableTilesInDirection(EFaceDirection Dir, TArray<int>& OutReachableTiles, float& OutAvgDistance) const;
+	int BFSCountReachableTilesInDirection(int StartIndex, EFaceDirection Dir, TArray<int>& OutReachableTiles, float& OutAvgDistance) const;
 	
     int CountAvailableTilesInDirection(EFaceDirection Dir, const FIntPoint& StartPos) const;
 	
