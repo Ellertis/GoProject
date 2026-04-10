@@ -186,7 +186,7 @@ EFaceDirection AGoPawnEnemyGunter::GetBestDirectionCombined() const
             if (Score.bHasImmediateMove && PathfindingSubsystem && PlayerRef && PlayerRef->CurrTile)
             {
                 TArray<int> ReachableIndices;
-                Score.ReachableTiles = BFSCountReachableTilesInDirection(TargetIndex,Dir, ReachableIndices, Score.AvgDistanceFromPlayer);
+                Score.ReachableTiles = BFSCountReachableTilesInDirection(CurrTile->Index,Dir, ReachableIndices, Score.AvgDistanceFromPlayer);
             }
         }
         else
