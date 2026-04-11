@@ -66,8 +66,14 @@ void AGoPawnPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputCompon
     if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
     {
         EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Started, this, &AGoPawnPlayer::OnClickTrigger);
+    	EnhancedInputComponent->BindAction(TouchActionClick, ETriggerEvent::Started, this, &AGoPawnPlayer::OnClickTrigger);
         EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Completed, this, &AGoPawnPlayer::OnClickReleased);
-    	if(AssignDebugJakePlacementMode){EnhancedInputComponent->BindAction(JakePlacementAction, ETriggerEvent::Triggered, this, &AGoPawnPlayer::OnJakePlacementTriggered);}
+    	EnhancedInputComponent->BindAction(TouchActionClick, ETriggerEvent::Completed, this, &AGoPawnPlayer::OnClickReleased);
+    	if(AssignDebugJakePlacementMode)
+    	{
+    		EnhancedInputComponent->BindAction(JakePlacementAction, ETriggerEvent::Triggered, this, &AGoPawnPlayer::OnJakePlacementTriggered);
+    		EnhancedInputComponent->BindAction(TouchJakePlacementAction, ETriggerEvent::Triggered, this, &AGoPawnPlayer::OnJakePlacementTriggered);
+    	}
     }
 }
 

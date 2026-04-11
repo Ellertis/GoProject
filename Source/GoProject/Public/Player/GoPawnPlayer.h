@@ -35,6 +35,12 @@ public:
     UInputAction* JakePlacementAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* TouchActionClick;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	UInputAction* TouchJakePlacementAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	bool AssignDebugJakePlacementMode;
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Jake")
